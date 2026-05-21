@@ -30,23 +30,23 @@
 
 ## 3. Durable Work Queue
 
-- [ ] Implement `src/state/models.py` — `Job` dataclass/model with all queue fields (job_id, job_type, idempotency_key, status, attempt_count, leased_by, lease_expires_at, next_retry_at, last_error, created_at, updated_at)
-- [ ] Implement `src/state/queue.py` — `WorkQueue` class with SQLite backend
-  - [ ] `_init_db()` — create table if not exists, enable WAL mode
-  - [ ] `enqueue(job_type, idempotency_key, payload)` — insert with `UNIQUE(idempotency_key)` constraint
-  - [ ] `lease(worker_id, ttl_seconds)` — atomically claim next pending job, set lease expiry
-  - [ ] `ack(job_id)` — mark as completed
-  - [ ] `retry_after(job_id, delay_seconds, reason)` — reset to pending after delay
-  - [ ] `dead_letter(job_id, reason)` — move to terminal dead_lettered state
-  - [ ] `get(job_id)` — retrieve by ID
-- [ ] Write `tests/test_queue.py` — cover:
-  - [ ] enqueue → lease → ack happy path
-  - [ ] enqueue → lease → retry_after → lease → ack
-  - [ ] enqueue → lease → dead_letter
-  - [ ] duplicate idempotency_key raises error
-  - [ ] lease with no pending jobs returns None
-  - [ ] expired lease can be reclaimed
-  - [ ] attempt_count increments on retry
+- [x] Implement `src/state/models.py` — `Job` dataclass/model with all queue fields (job_id, job_type, idempotency_key, status, attempt_count, leased_by, lease_expires_at, next_retry_at, last_error, created_at, updated_at)
+- [x] Implement `src/state/queue.py` — `WorkQueue` class with SQLite backend
+  - [x] `_init_db()` — create table if not exists, enable WAL mode
+  - [x] `enqueue(job_type, idempotency_key, payload)` — insert with `UNIQUE(idempotency_key)` constraint
+  - [x] `lease(worker_id, ttl_seconds)` — atomically claim next pending job, set lease expiry
+  - [x] `ack(job_id)` — mark as completed
+  - [x] `retry_after(job_id, delay_seconds, reason)` — reset to pending after delay
+  - [x] `dead_letter(job_id, reason)` — move to terminal dead_lettered state
+  - [x] `get(job_id)` — retrieve by ID
+- [x] Write `tests/test_queue.py` — cover:
+  - [x] enqueue → lease → ack happy path
+  - [x] enqueue → lease → retry_after → lease → ack
+  - [x] enqueue → lease → dead_letter
+  - [x] duplicate idempotency_key raises error
+  - [x] lease with no pending jobs returns None
+  - [x] expired lease can be reclaimed
+  - [x] attempt_count increments on retry
 
 **Estimated**: ~2 hours
 
