@@ -1,0 +1,28 @@
+parent:
+  number: 1
+  url: https://github.com/ricoyudog/chirtian-bot/issues/1
+groups:
+  - number: 1
+    name: "Project Scaffold & Config"
+    issue_number: 2
+    url: https://github.com/ricoyudog/chirtian-bot/issues/2
+  - number: 2
+    name: "Runtime Mode Guard"
+    issue_number: 3
+    url: https://github.com/ricoyudog/chirtian-bot/issues/3
+  - number: 3
+    name: "Durable Work Queue"
+    issue_number: 4
+    url: https://github.com/ricoyudog/chirtian-bot/issues/4
+  - number: 4
+    name: "Audit Ledger"
+    issue_number: 5
+    url: https://github.com/ricoyudog/chirtian-bot/issues/5
+  - number: 5
+    name: "Idempotency Key Helpers"
+    issue_number: 6
+    url: https://github.com/ricoyudog/chirtian-bot/issues/6
+  - number: 6
+    name: "Safety Integration Tests"
+    issue_number: 7
+    url: https://github.com/ricoyudog/chirtian-bot/issues/7
