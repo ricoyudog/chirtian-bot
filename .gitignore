@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# IDE / Editor
+.obsidian/
+.vscode/
+
+# Claude / AI config
+.claude/
+.claudian/
+.opencode/
+.omx/
+
+# Archives
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*

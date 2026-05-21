@@ -1,0 +1,6 @@
+schema: github-tracked
+isolation:
+  mode: none
+installer:
+  version: 1
+  managed_at: '2026-05-21T14:44:51.244Z'

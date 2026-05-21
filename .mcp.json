@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mcp-substack": {
+      "command": "/opt/homebrew/bin/node",
+      "args": ["/Users/chunsingyu/softwares/mcp-substack/lib/index.mjs"]
+    }
+  }
+}

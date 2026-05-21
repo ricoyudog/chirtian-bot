@@ -1,0 +1,14 @@
+---
+schema: github-tracked
+change: phase-1-foundation-state-and-safety
+created: '2026-05-21'
+status: proposed
+artifacts:
+  - id: proposal
+    status: done
+  - id: design
+    status: done
+  - id: tasks
+    status: done
+apply_requires:
+  - tasks
