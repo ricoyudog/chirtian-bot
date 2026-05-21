@@ -2,12 +2,16 @@
 
 ## 1. Project Scaffold & Config
 
-- [ ] Initialize `pyproject.toml` with project metadata, dependencies (`pydantic>=2.0`, `pyyaml`, `pytest`, `ruff`), and entry points
-- [ ] Create `src/` package layout with `__init__.py` files for `config/`, `safety/`, `state/`
-- [ ] Create `tests/` directory with `conftest.py` (shared fixtures: tmp SQLite, tmp ledger, sample configs)
-- [ ] Create `config.yaml` schema at project root with Phase 1 fields (runtime, risk, portfolio, executor sections)
-- [ ] Implement `src/config/settings.py` — Pydantic v2 models: `RuntimeConfig`, `RiskConfig`, with field validators
-- [ ] Implement `src/config/validation.py` — `load_config(path)`, `validate_startup(config)`, `compute_config_hash(config)`
+- [x] Initialize `pyproject.toml` with project metadata, dependencies (`pydantic>=2.0`, `pyyaml`, `pytest`, `ruff`), and entry points
+- [x] Create `src/` package layout with `__init__.py` files for `config/`, `safety/`, `state/`
+- [x] Create `tests/` directory with `conftest.py` (shared fixtures: tmp SQLite, tmp ledger, sample configs)
+- [x] Create `config.yaml` schema at project root with Phase 1 fields (runtime, risk, portfolio, executor sections)
+- [x] Implement `src/config/settings.py` — Pydantic v2 models: `RuntimeConfig`, `RiskConfig`, with field validators
+- [x] Implement `src/config/validation.py` — `load_config(path)`, `validate_startup(config)`, `compute_config_hash(config)`
+- [x] Fix: remove unused imports in `tests/conftest.py` (`tempfile`, `Path`)
+- [x] Fix: break long line in `src/config/settings.py:12` to fit 100 chars
+- [x] Fix: remove redundant `concentration_within_range` validator in `src/config/settings.py` (already enforced by `Field(gt=0, le=100)`)
+- [x] Fix: break long line in `src/config/validation.py:40` to fit 100 chars
 
 **Estimated**: ~1.5 hours
 

@@ -1,0 +1,15 @@
+runtime:
+  mode: offline_replay          # offline_replay | shadow | uat_confirm | prod_confirm | prod_auto
+  environment: uat              # uat | prod
+  region: US
+  account_ids:
+    - ACC001
+  confirmation_mode: confirm    # auto | confirm | skip
+
+risk:
+  max_notional_usd: 10000
+  max_quantity: 1000
+  max_concentration_pct: 10.0
+  symbol_whitelist:
+    - AAPL
+    - TSLA
