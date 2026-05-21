@@ -19,9 +19,10 @@
 
 ## 2. Runtime Mode Guard
 
-- [ ] Implement `src/safety/runtime_guard.py` — `RuntimeGuard` class with `assert_safe_to_run()` and `assert_mutation_allowed()`
-- [ ] Add guard rules: `prod + auto_confirm` hard fail, MVP mode allowlist (`offline_replay`, `shadow`, `uat_confirm`)
-- [ ] Write `tests/test_runtime_guard.py` — cover: prod+auto hard fail, valid modes pass, invalid mode rejected, MVP mode restriction
+- [x] Implement `src/safety/runtime_guard.py` — `RuntimeGuard` class with `assert_safe_to_run()` and `assert_mutation_allowed()`
+- [x] Add guard rules: `prod + auto_confirm` hard fail, MVP mode allowlist (`offline_replay`, `shadow`, `uat_confirm`)
+- [x] Write `tests/test_runtime_guard.py` — cover: prod+auto hard fail, valid modes pass, invalid mode rejected, MVP mode restriction
+- [x] Fix: remove dead config assignment in test_runtime_guard.py line 26
 
 **Estimated**: ~0.5 hours
 
