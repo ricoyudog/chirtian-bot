@@ -54,19 +54,19 @@
 
 ## 4. Audit Ledger
 
-- [ ] Add `AuditEvent` model to `src/state/models.py` — event_id, timestamp, event_type, config_hash, source, data, correlation_id
-- [ ] Implement `src/state/ledger.py` — `AuditLedger` class with JSONL backend
-  - [ ] `append(event)` — write JSON line, raise on failure
-  - [ ] `query(event_type, correlation_id, since)` — read-only filter
-  - [ ] `verify_integrity()` — validate all lines are parseable JSON
-- [ ] Write `tests/test_ledger.py` — cover:
-  - [ ] append single event and read back
-  - [ ] append multiple events, query by type
-  - [ ] query by correlation_id
-  - [ ] query by since timestamp
-  - [ ] verify_integrity passes for valid ledger
-  - [ ] verify_integrity detects malformed lines
-  - [ ] config_hash present in every event
+- [x] Add `AuditEvent` model to `src/state/models.py` — event_id, timestamp, event_type, config_hash, source, data, correlation_id
+- [x] Implement `src/state/ledger.py` — `AuditLedger` class with JSONL backend
+  - [x] `append(event)` — write JSON line, raise on failure
+  - [x] `query(event_type, correlation_id, since)` — read-only filter
+  - [x] `verify_integrity()` — validate all lines are parseable JSON
+- [x] Write `tests/test_ledger.py` — cover:
+  - [x] append single event and read back
+  - [x] append multiple events, query by type
+  - [x] query by correlation_id
+  - [x] query by since timestamp
+  - [x] verify_integrity passes for valid ledger
+  - [x] verify_integrity detects malformed lines
+  - [x] config_hash present in every event
 
 **Estimated**: ~1.5 hours
 
