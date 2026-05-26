@@ -74,14 +74,14 @@
 
 ## 5. Idempotency Key Helpers
 
-- [ ] Implement `src/safety/idempotency.py` — `generate_idempotency_key(post_id, sequence, action, symbol, quantity_pct)` using SHA-256
-- [ ] Add `IdempotencyGuard` class that wraps WorkQueue's UNIQUE constraint with explicit `check_and_enqueue()` method
-- [ ] Write `tests/test_idempotency.py` — cover:
-  - [ ] same inputs → same key (deterministic)
-  - [ ] different inputs → different keys
-  - [ ] case normalization (action/symbol uppercased)
-  - [ ] float precision handling for quantity_pct
-  - [ ] duplicate key blocked on second enqueue
+- [x] Implement `src/safety/idempotency.py` — `generate_idempotency_key(post_id, sequence, action, symbol, quantity_pct)` using SHA-256
+- [x] Add `IdempotencyGuard` class that wraps WorkQueue's UNIQUE constraint with explicit `check_and_enqueue()` method
+- [x] Write `tests/test_idempotency.py` — cover:
+  - [x] same inputs → same key (deterministic)
+  - [x] different inputs → different keys
+  - [x] case normalization (action/symbol uppercased)
+  - [x] float precision handling for quantity_pct
+  - [x] duplicate key blocked on second enqueue
 
 **Estimated**: ~1 hour
 
