@@ -89,15 +89,15 @@
 
 ## 6. Safety Integration Tests
 
-- [ ] Write `tests/test_safety_integration.py` — full flow tests:
-  - [ ] Config load → validation → guard → config hash in audit
-  - [ ] Config load with invalid fields → startup fails fast
-  - [ ] Valid config → enqueue job → lease → audit event recorded → ack → audit event recorded
-  - [ ] Idempotency: same instruction enqueued twice → second blocked → audit shows duplicate attempt
-  - [ ] Runtime guard: prod+auto config fails at startup, no queue operations possible
-  - [ ] Queue crash simulation: enqueue → process killed (simulated) → restart → lease picks up pending job
-  - [ ] Ledger integrity check at startup detects corruption
-- [ ] Ensure all tests pass with `pytest` and no external credentials needed
+- [x] Write `tests/test_safety_integration.py` — full flow tests:
+  - [x] Config load → validation → guard → config hash in audit
+  - [x] Config load with invalid fields → startup fails fast
+  - [x] Valid config → enqueue job → lease → audit event recorded → ack → audit event recorded
+  - [x] Idempotency: same instruction enqueued twice → second blocked → audit shows duplicate attempt
+  - [x] Runtime guard: prod+auto config fails at startup, no queue operations possible
+  - [x] Queue crash simulation: enqueue → process killed (simulated) → restart → lease picks up pending job
+  - [x] Ledger integrity check at startup detects corruption
+- [x] Ensure all tests pass with `pytest` and no external credentials needed
 
 **Estimated**: ~1.5 hours
 
