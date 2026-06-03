@@ -1,0 +1,10 @@
+case_id: "033"
+category: "mixed_summary_forward"
+post_id: "substack:20260601:test-033"
+raw_text: |
+  已加倉nvdl 1%，如果明天繼續下跌會考慮再加
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "PAST_ACTION"
+  - "CONDITIONAL"

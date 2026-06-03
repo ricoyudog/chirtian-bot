@@ -1,0 +1,16 @@
+case_id: "012"
+category: "clear_sell"
+post_id: "substack:20260601:test-012"
+raw_text: |
+  cover short qqq 10%
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "COVER"
+    symbol: "QQQ"
+    quantity_pct: 10.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

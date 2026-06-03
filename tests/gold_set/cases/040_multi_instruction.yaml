@@ -1,0 +1,30 @@
+case_id: "040"
+category: "multi_instruction"
+post_id: "substack:20260601:test-040"
+raw_text: |
+  買入ionq，rgti，qbts各1%
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "BUY"
+    symbol: "IONQ"
+    quantity_pct: 1.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+  - sequence: 1
+    action: "BUY"
+    symbol: "RGTI"
+    quantity_pct: 1.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+  - sequence: 2
+    action: "BUY"
+    symbol: "QBTS"
+    quantity_pct: 1.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

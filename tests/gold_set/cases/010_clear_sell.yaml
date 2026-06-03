@@ -1,0 +1,23 @@
+case_id: "010"
+category: "clear_sell"
+post_id: "substack:20260601:test-010"
+raw_text: |
+  賣出全部smci（4.3%），賣出全部nbis（1.8%）
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "SELL"
+    symbol: "SMCI"
+    quantity_pct: null
+    quantity_type: "all"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+  - sequence: 1
+    action: "SELL"
+    symbol: "NBIS"
+    quantity_pct: null
+    quantity_type: "all"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

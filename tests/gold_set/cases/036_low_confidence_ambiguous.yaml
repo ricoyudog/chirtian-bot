@@ -1,0 +1,9 @@
+case_id: "036"
+category: "low_confidence_ambiguous"
+post_id: "substack:20260601:test-036"
+raw_text: |
+  tesla今天不錯
+expected_status: "NEEDS_REVIEW"
+expected_instructions: []
+expected_reason_codes:
+  - "NO_CLEAR_ACTION"

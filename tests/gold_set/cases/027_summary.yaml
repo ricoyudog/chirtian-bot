@@ -1,0 +1,9 @@
+case_id: "027"
+category: "summary"
+post_id: "substack:20260601:test-027"
+raw_text: |
+  3月-8月總結
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "HISTORICAL_SUMMARY"

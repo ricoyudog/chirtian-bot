@@ -1,0 +1,9 @@
+case_id: "028"
+category: "summary"
+post_id: "substack:20260601:test-028"
+raw_text: |
+  10月策略調整
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "HISTORICAL_SUMMARY"

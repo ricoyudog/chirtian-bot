@@ -1,0 +1,10 @@
+case_id: "031"
+category: "mixed_summary_forward"
+post_id: "substack:20260601:test-031"
+raw_text: |
+  今天已經清倉了港股，等回調後會重新建倉
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "PAST_ACTION"
+  - "FUTURE_INTENT"

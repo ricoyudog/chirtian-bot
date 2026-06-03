@@ -1,0 +1,16 @@
+case_id: "004"
+category: "clear_buy"
+post_id: "substack:20260601:test-004"
+raw_text: |
+  今天加倉 conl（兩倍做多coin）3%
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "BUY"
+    symbol: "CONL"
+    quantity_pct: 3.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

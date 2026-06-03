@@ -1,0 +1,16 @@
+case_id: "009"
+category: "clear_sell"
+post_id: "substack:20260601:test-009"
+raw_text: |
+  賣出全部etsy
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "SELL"
+    symbol: "ETSY"
+    quantity_pct: null
+    quantity_type: "all"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

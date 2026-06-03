@@ -1,0 +1,30 @@
+case_id: "038"
+category: "multi_instruction"
+post_id: "substack:20260601:test-038"
+raw_text: |
+  加倉aaoi 1%，加倉u 2%，加倉sofi 2%
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "BUY"
+    symbol: "AAOI"
+    quantity_pct: 1.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+  - sequence: 1
+    action: "BUY"
+    symbol: "U"
+    quantity_pct: 2.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+  - sequence: 2
+    action: "BUY"
+    symbol: "SOFI"
+    quantity_pct: 2.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

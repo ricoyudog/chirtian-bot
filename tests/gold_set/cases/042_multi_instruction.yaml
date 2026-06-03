@@ -1,0 +1,23 @@
+case_id: "042"
+category: "multi_instruction"
+post_id: "substack:20260601:test-042"
+raw_text: |
+  short sndk -1%，short aaoi -1%
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "SHORT"
+    symbol: "SNDK"
+    quantity_pct: 1.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+  - sequence: 1
+    action: "SHORT"
+    symbol: "AAOI"
+    quantity_pct: 1.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

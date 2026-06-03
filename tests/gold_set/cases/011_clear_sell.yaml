@@ -1,0 +1,16 @@
+case_id: "011"
+category: "clear_sell"
+post_id: "substack:20260601:test-011"
+raw_text: |
+  cover short 全部htz
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "COVER"
+    symbol: "HTZ"
+    quantity_pct: null
+    quantity_type: "all"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

@@ -1,0 +1,9 @@
+case_id: "021"
+category: "future_intent"
+post_id: "substack:20260601:test-021"
+raw_text: |
+  準備在3月20日財報日前後找機會做多
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "FUTURE_INTENT"

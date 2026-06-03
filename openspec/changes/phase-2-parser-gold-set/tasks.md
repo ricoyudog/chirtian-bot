@@ -64,19 +64,19 @@
 
 ## 4. Gold Test Set Fixtures
 
-- [ ] 4.1 Create `tests/gold_set/cases/` directory
-- [ ] 4.2 Write clear_buy cases (5–8 cases): simple buy, buy with time modifier, buy multiple stocks, buy leveraged ETF, buy with 解釋括號
-- [ ] 4.3 Write clear_sell cases (4–6 cases): simple sell, sell all, sell with percentage, cover short, cover short all
-- [ ] 4.4 Write no_op cases (3–5 cases): 今天沒有操作, market philosophy, operational post
-- [ ] 4.5 Write future_intent cases (3–5 cases): 準備下週, 計劃在, 等回調後, 等X再
-- [ ] 4.6 Write conditional cases (3–5 cases): 如果...會, 逢低加倉, 鑒於...如果...將
-- [ ] 4.7 Write summary cases (3–4 cases): weekly summary, monthly summary, strategy review
-- [ ] 4.8 Write mixed_summary_forward cases (3–5 cases): summary + plan, summary + conditional, 已完成 + 待執行
-- [ ] 4.9 Write low_confidence_ambiguous cases (3–5 cases): vague direction, unclear quantity, partial instruction
-- [ ] 4.10 Write multi_instruction cases (3–5 cases): inline multi, numbered list, 各N%, mixed buy+sell
-- [ ] 4.11 Write option_buy cases (3–4 cases): long call, long put, short put, buy with ticker format
-- [ ] 4.12 Write option_sell cases (2–3 cases): short call, sell call, short call with note
-- [ ] 4.13 Write option_cover cases (2–3 cases): cover call, cover put with ticker format
+- [x] 4.1 Create `tests/gold_set/cases/` directory
+- [x] 4.2 Write clear_buy cases (5–8 cases): simple buy, buy with time modifier, buy multiple stocks, buy leveraged ETF, buy with 解釋括號
+- [x] 4.3 Write clear_sell cases (4–6 cases): simple sell, sell all, sell with percentage, cover short, cover short all
+- [x] 4.4 Write no_op cases (3–5 cases): 今天沒有操作, market philosophy, operational post
+- [x] 4.5 Write future_intent cases (3–5 cases): 準備下週, 計劃在, 等回調後, 等X再
+- [x] 4.6 Write conditional cases (3–5 cases): 如果...會, 逢低加倉, 鑒於...如果...將
+- [x] 4.7 Write summary cases (3–4 cases): weekly summary, monthly summary, strategy review
+- [x] 4.8 Write mixed_summary_forward cases (3–5 cases): summary + plan, summary + conditional, 已完成 + 待執行
+- [x] 4.9 Write low_confidence_ambiguous cases (3–5 cases): vague direction, unclear quantity, partial instruction
+- [x] 4.10 Write multi_instruction cases (3–5 cases): inline multi, numbered list, 各N%, mixed buy+sell
+- [x] 4.11 Write option_buy cases (3–4 cases): long call, long put, short put, buy with ticker format
+- [x] 4.12 Write option_sell cases (2–3 cases): short call, sell call, short call with note
+- [x] 4.13 Write option_cover cases (2–3 cases): cover call, cover put with ticker format
 
 **Estimated**: ~2.5 hours
 

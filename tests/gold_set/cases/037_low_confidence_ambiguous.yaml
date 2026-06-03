@@ -1,0 +1,9 @@
+case_id: "037"
+category: "low_confidence_ambiguous"
+post_id: "substack:20260601:test-037"
+raw_text: |
+  減少一些做多敞口
+expected_status: "NEEDS_REVIEW"
+expected_instructions: []
+expected_reason_codes:
+  - "MISSING_SYMBOL"

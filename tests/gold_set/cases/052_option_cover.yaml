@@ -1,0 +1,20 @@
+case_id: "052"
+category: "option_cover"
+post_id: "substack:20260601:test-052"
+raw_text: |
+  cover short coin call 已回報+50%
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "option_cover"
+    symbol: "COIN"
+    quantity_pct: null
+    quantity_type: "all"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+    option_type: "call"
+    option_side: "short"
+    strike: null
+    expiry: null
+expected_reason_codes:
+  - "CLEAR_ACTION"

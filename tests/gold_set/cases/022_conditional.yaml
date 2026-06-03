@@ -1,0 +1,9 @@
+case_id: "022"
+category: "conditional"
+post_id: "substack:20260601:test-022"
+raw_text: |
+  如果明天還保持弱勢會考慮削減nvdl
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "CONDITIONAL"

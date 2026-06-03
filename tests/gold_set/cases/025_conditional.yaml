@@ -1,0 +1,9 @@
+case_id: "025"
+category: "conditional"
+post_id: "substack:20260601:test-025"
+raw_text: |
+  逢大跌適度減倉做空，逢反彈加倉做空
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "CONDITIONAL"

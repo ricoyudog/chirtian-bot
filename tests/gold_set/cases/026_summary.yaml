@@ -1,0 +1,9 @@
+case_id: "026"
+category: "summary"
+post_id: "substack:20260601:test-026"
+raw_text: |
+  2026年5月15日美股港股
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "HISTORICAL_SUMMARY"

@@ -1,0 +1,9 @@
+case_id: "019"
+category: "future_intent"
+post_id: "substack:20260601:test-019"
+raw_text: |
+  等EWY到135左右再short
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "FUTURE_INTENT"

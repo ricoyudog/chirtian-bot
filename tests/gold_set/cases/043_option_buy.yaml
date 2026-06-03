@@ -1,0 +1,20 @@
+case_id: "043"
+category: "option_buy"
+post_id: "substack:20260601:test-043"
+raw_text: |
+  買入1% crwv call（26年7月17日到期，strike 150）
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "option_place"
+    symbol: "CRWV"
+    quantity_pct: 1.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+    option_type: "call"
+    option_side: "long"
+    strike: 150.0
+    expiry: "2026-07-17"
+expected_reason_codes:
+  - "CLEAR_ACTION"

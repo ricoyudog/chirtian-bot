@@ -1,0 +1,20 @@
+case_id: "045"
+category: "option_buy"
+post_id: "substack:20260601:test-045"
+raw_text: |
+  開始short 英偉達put，到期日2025年5月16日，strike 100（short put是做多）
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "option_place"
+    symbol: "NVDA"
+    quantity_pct: null
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+    option_type: "put"
+    option_side: "short"
+    strike: 100.0
+    expiry: "2025-05-16"
+expected_reason_codes:
+  - "CLEAR_ACTION"

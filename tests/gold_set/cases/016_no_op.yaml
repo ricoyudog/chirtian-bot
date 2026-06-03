@@ -1,0 +1,9 @@
+case_id: "016"
+category: "no_op"
+post_id: "substack:20260601:test-016"
+raw_text: |
+  今天沒有操作，節日前行情較平淡；
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "NO_ACTION_TODAY"

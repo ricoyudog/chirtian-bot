@@ -1,0 +1,20 @@
+case_id: "047"
+category: "option_sell"
+post_id: "substack:20260601:test-047"
+raw_text: |
+  開始short 特斯拉 call，到期日7月18日，strike 380
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "option_place"
+    symbol: "TSLA"
+    quantity_pct: null
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+    option_type: "call"
+    option_side: "short"
+    strike: 380.0
+    expiry: "2026-07-18"
+expected_reason_codes:
+  - "CLEAR_ACTION"

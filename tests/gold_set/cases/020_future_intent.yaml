@@ -1,0 +1,9 @@
+case_id: "020"
+category: "future_intent"
+post_id: "substack:20260601:test-020"
+raw_text: |
+  計劃在4月買入特斯拉
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "FUTURE_INTENT"

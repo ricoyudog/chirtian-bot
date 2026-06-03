@@ -1,0 +1,9 @@
+case_id: "014"
+category: "no_op"
+post_id: "substack:20260601:test-014"
+raw_text: |
+  投資往回看都是確定性，往前看都是確定性
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "MARKET_PHILOSOPHY"

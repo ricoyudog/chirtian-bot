@@ -1,0 +1,9 @@
+case_id: "017"
+category: "future_intent"
+post_id: "substack:20260601:test-017"
+raw_text: |
+  準備下週找機會做空泡泡瑪特
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "FUTURE_INTENT"

@@ -1,0 +1,16 @@
+case_id: "006"
+category: "clear_buy"
+post_id: "substack:20260601:test-006"
+raw_text: |
+  開始買入crdo 1%
+expected_status: "EXECUTABLE"
+expected_instructions:
+  - sequence: 0
+    action: "BUY"
+    symbol: "CRDO"
+    quantity_pct: 1.0
+    quantity_type: "pct"
+    confidence_min: 0.8
+    time_modifier: "immediate"
+expected_reason_codes:
+  - "CLEAR_ACTION"

@@ -1,0 +1,12 @@
+case_id: "032"
+category: "mixed_summary_forward"
+post_id: "substack:20260601:test-032"
+raw_text: |
+  2026年5月20日美股港股多空
+  今天加倉了aaoi 1%，u 2%，sofi 2%
+  後面會逢高減倉一些股票
+expected_status: "SKIP_NOT_ACTIONABLE"
+expected_instructions: []
+expected_reason_codes:
+  - "HISTORICAL_SUMMARY"
+  - "PAST_ACTION"
