@@ -227,7 +227,14 @@ _, decision = ta.propagate(parsed.symbol, analysis_date)
 
 ### 在 Pipeline 中的角色
 
-```
+> **⚠️ Fail-Closed Policy（2026-06-03 新增）**
+>
+> Module 2b 如果 timeout / error / unavailable，結果必須是 `NEEDS_REVIEW`，不得產生 auto APPROVE。
+> Parser result + basic risk 只能做 advisory reference，不能做 execution gate。
+> 除非之後有人手 override 並寫 audit，否則最終 machine state 必須是 `NEEDS_REVIEW`。
+> 這保持 [[wiki/architecture/auto-trading-risk-gates]] 的權威性：TA unavailable 不可 fail open。
+
+```text
 ParsedInstruction (symbol, action)
        │
        ▼

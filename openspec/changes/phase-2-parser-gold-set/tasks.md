@@ -107,11 +107,11 @@
 
 ## 6. Integration & Documentation
 
-- [ ] 6.1 Run full Layer 1 test suite (`pytest tests/ -m "not live"`) and verify all pass
-- [ ] 6.2 Run Layer 2 test suite (`pytest tests/gold_set/test_live.py -m live`) and record results
-- [ ] 6.3 Update `wiki/architecture/auto-trading-pipeline-High-level.md` Module 2b — add explicit TA fallback policy: "Module 2b 如果 timeout / error / unavailable，結果必須是 NEEDS_REVIEW，不得產生 auto APPROVE。Parser result + basic risk 只能做 advisory reference，不能做 execution gate。"
-- [ ] 6.4 Verify all Phase 1 tests still pass alongside new tests
-- [ ] 6.5 Run `ruff check` and `ruff format` on all new files
+- [x] 6.1 Run full Layer 1 test suite (`pytest tests/ -m "not live"`) and verify all pass
+- [x] 6.2 Run Layer 2 test suite (`pytest tests/gold_set/test_live.py -m live`) and record results
+- [x] 6.3 Update `wiki/architecture/auto-trading-pipeline-High-level.md` Module 2b — add explicit TA fallback policy: "Module 2b 如果 timeout / error / unavailable，結果必須是 NEEDS_REVIEW，不得產生 auto APPROVE。Parser result + basic risk 只能做 advisory reference，不能做 execution gate。"
+- [x] 6.4 Verify all Phase 1 tests still pass alongside new tests
+- [x] 6.5 Run `ruff check` and `ruff format` on all new files
 
 **Estimated**: ~1 hour
 
