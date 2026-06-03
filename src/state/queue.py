@@ -66,6 +66,8 @@ class WorkQueue:
         return job_id
 
     def lease(self, worker_id: str, ttl_seconds: int = 300) -> Optional[Job]:
+        if ttl_seconds < 0:
+            raise ValueError(f"ttl_seconds must be non-negative, got {ttl_seconds}")
         now = datetime.now(UTC)
         now_iso = now.isoformat()
         expires_iso = (now + timedelta(seconds=ttl_seconds)).isoformat()
@@ -125,7 +127,7 @@ class WorkQueue:
         now = datetime.now(UTC)
         retry_at = (now + timedelta(seconds=delay_seconds)).isoformat()
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
+            cursor = conn.execute(
                 """
                 UPDATE work_queue
                 SET status = 'pending',
@@ -136,9 +138,14 @@ class WorkQueue:
                     lease_expires_at = NULL,
                     updated_at = ?
                 WHERE job_id = ?
+                  AND status NOT IN ('dead_lettered', 'completed')
                 """,
                 (retry_at, reason, now.isoformat(), job_id),
             )
+            if cursor.rowcount == 0:
+                raise ValueError(
+                    f"Cannot retry job {job_id}: job is in a terminal state"
+                )
 
     def dead_letter(self, job_id: str, reason: str) -> None:
         now = _now_iso()

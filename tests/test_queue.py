@@ -117,3 +117,48 @@ class TestAttemptCount:
 
         result = q.get(job_id)
         assert result.attempt_count == 3
+
+
+class TestRetryAfterTerminalGuard:
+    def test_retry_after_dead_lettered_raises(self, tmp_db):
+        q = WorkQueue(tmp_db)
+        job_id = q.enqueue("test_job", "key-1", {"x": 1})
+        q.lease("worker-1")
+        q.dead_letter(job_id, "permanent failure")
+
+        with pytest.raises(ValueError, match="terminal state"):
+            q.retry_after(job_id, delay_seconds=0, reason="should fail")
+
+    def test_retry_after_completed_raises(self, tmp_db):
+        q = WorkQueue(tmp_db)
+        job_id = q.enqueue("test_job", "key-1", {"x": 1})
+        q.lease("worker-1")
+        q.ack(job_id)
+
+        with pytest.raises(ValueError, match="terminal state"):
+            q.retry_after(job_id, delay_seconds=0, reason="should fail")
+
+    def test_dead_lettered_not_claimable(self, tmp_db):
+        q = WorkQueue(tmp_db)
+        job_id = q.enqueue("test_job", "key-1", {"x": 1})
+        q.lease("worker-1")
+        q.dead_letter(job_id, "permanent failure")
+
+        assert q.lease("worker-2") is None
+
+
+class TestLeaseTtlValidation:
+    def test_negative_ttl_raises(self, tmp_db):
+        q = WorkQueue(tmp_db)
+        q.enqueue("test_job", "key-1", {"x": 1})
+
+        with pytest.raises(ValueError, match="non-negative"):
+            q.lease("worker-1", ttl_seconds=-60)
+
+    def test_zero_ttl_accepted(self, tmp_db):
+        q = WorkQueue(tmp_db)
+        q.enqueue("test_job", "key-1", {"x": 1})
+
+        job = q.lease("worker-1", ttl_seconds=0)
+        assert job is not None
+        assert job.leased_by == "worker-1"
