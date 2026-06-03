@@ -1,0 +1,6 @@
+christian log
+memory
+openspec
+src
+tests
+wiki

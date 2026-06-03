@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: christian-bot
+Version: 0.1.0
+Summary: Auto-trading safety harness: config validation, runtime guard, durable queue, audit ledger
+Requires-Python: >=3.11
+Requires-Dist: pydantic>=2.0
+Requires-Dist: pyyaml
+Requires-Dist: jsonschema>=4.0
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

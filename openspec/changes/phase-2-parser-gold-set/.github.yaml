@@ -1,0 +1,28 @@
+parent:
+  number: 8
+  url: https://github.com/ricoyudog/chirtian-bot/issues/8
+groups:
+  - number: 1
+    name: "LLM Client Adapter"
+    issue_number: 9
+    url: https://github.com/ricoyudog/chirtian-bot/issues/9
+  - number: 2
+    name: "Parser Data Models & Schema"
+    issue_number: 10
+    url: https://github.com/ricoyudog/chirtian-bot/issues/10
+  - number: 3
+    name: "Instruction Parser Core"
+    issue_number: 11
+    url: https://github.com/ricoyudog/chirtian-bot/issues/11
+  - number: 4
+    name: "Gold Test Set Fixtures"
+    issue_number: 12
+    url: https://github.com/ricoyudog/chirtian-bot/issues/12
+  - number: 5
+    name: "Test Harness"
+    issue_number: 13
+    url: https://github.com/ricoyudog/chirtian-bot/issues/13
+  - number: 6
+    name: "Integration & Documentation"
+    issue_number: 14
+    url: https://github.com/ricoyudog/chirtian-bot/issues/14
