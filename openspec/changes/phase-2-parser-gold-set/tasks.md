@@ -29,34 +29,34 @@
 
 ## 3. Instruction Parser Core
 
-- [ ] 3.1 Implement `src/analyzer/context_loader.py` — load `wiki/research/christian-trading-language.md` as parser context
-- [ ] 3.2 Implement parser prompt template — system instruction + reference context + post text + output schema
-- [ ] 3.3 Implement `src/analyzer/parser.py` — `InstructionParser` class:
-  - [ ] 3.3.1 `parse(post_id, raw_text) -> ParseResult` — main entry point
-  - [ ] 3.3.2 Build prompt from template + context + post text
-  - [ ] 3.3.3 Call `LLMClient.complete_json()` with parser schema
-  - [ ] 3.3.4 Map LLM response to `ParseResult` with `ParsedInstruction[]`
-  - [ ] 3.3.5 Generate `instruction_id` and `idempotency_key` per instruction
-  - [ ] 3.3.6 Handle all LLM errors → `ParseResult(status="NEEDS_REVIEW")`
-  - [ ] 3.3.7 Write audit event to `AuditLedger` for every parse call
-- [ ] 3.4 Write `tests/test_parser.py` (mock-based) — cover:
-  - [ ] 3.4.1 Clear buy → EXECUTABLE with correct instruction fields
-  - [ ] 3.4.2 Clear sell → EXECUTABLE
-  - [ ] 3.4.3 Sell all → quantity_type "all"
-  - [ ] 3.4.4 No-op → SKIP_NOT_ACTIONABLE
-  - [ ] 3.4.5 Future intent → SKIP_NOT_ACTIONABLE + FUTURE_INTENT code
-  - [ ] 3.4.6 Conditional → SKIP_NOT_ACTIONABLE + CONDITIONAL code
-  - [ ] 3.4.7 Summary → SKIP_NOT_ACTIONABLE + HISTORICAL_SUMMARY code
-  - [ ] 3.4.8 Mixed summary + forward → SKIP_NOT_ACTIONABLE + multiple codes
-  - [ ] 3.4.9 Ambiguous → NEEDS_REVIEW
-  - [ ] 3.4.10 Multi-instruction → correct sequence order
-  - [ ] 3.4.11 Option long call → correct option fields
-  - [ ] 3.4.12 Option short call → correct option fields
-  - [ ] 3.4.13 Option long put → correct option fields
-  - [ ] 3.4.14 LLM timeout → NEEDS_REVIEW
-  - [ ] 3.4.15 LLM invalid JSON → NEEDS_REVIEW
-  - [ ] 3.4.16 Instruction ID and idempotency key stability on replay
-  - [ ] 3.4.17 Audit event written for success, skip, and error cases
+- [x] 3.1 Implement `src/analyzer/context_loader.py` — load `wiki/research/christian-trading-language.md` as parser context
+- [x] 3.2 Implement parser prompt template — system instruction + reference context + post text + output schema
+- [x] 3.3 Implement `src/analyzer/parser.py` — `InstructionParser` class:
+  - [x] 3.3.1 `parse(post_id, raw_text) -> ParseResult` — main entry point
+  - [x] 3.3.2 Build prompt from template + context + post text
+  - [x] 3.3.3 Call `LLMClient.complete_json()` with parser schema
+  - [x] 3.3.4 Map LLM response to `ParseResult` with `ParsedInstruction[]`
+  - [x] 3.3.5 Generate `instruction_id` and `idempotency_key` per instruction
+  - [x] 3.3.6 Handle all LLM errors → `ParseResult(status="NEEDS_REVIEW")`
+  - [x] 3.3.7 Write audit event to `AuditLedger` for every parse call
+- [x] 3.4 Write `tests/test_parser.py` (mock-based) — cover:
+  - [x] 3.4.1 Clear buy → EXECUTABLE with correct instruction fields
+  - [x] 3.4.2 Clear sell → EXECUTABLE
+  - [x] 3.4.3 Sell all → quantity_type "all"
+  - [x] 3.4.4 No-op → SKIP_NOT_ACTIONABLE
+  - [x] 3.4.5 Future intent → SKIP_NOT_ACTIONABLE + FUTURE_INTENT code
+  - [x] 3.4.6 Conditional → SKIP_NOT_ACTIONABLE + CONDITIONAL code
+  - [x] 3.4.7 Summary → SKIP_NOT_ACTIONABLE + HISTORICAL_SUMMARY code
+  - [x] 3.4.8 Mixed summary + forward → SKIP_NOT_ACTIONABLE + multiple codes
+  - [x] 3.4.9 Ambiguous → NEEDS_REVIEW
+  - [x] 3.4.10 Multi-instruction → correct sequence order
+  - [x] 3.4.11 Option long call → correct option fields
+  - [x] 3.4.12 Option short call → correct option fields
+  - [x] 3.4.13 Option long put → correct option fields
+  - [x] 3.4.14 LLM timeout → NEEDS_REVIEW
+  - [x] 3.4.15 LLM invalid JSON → NEEDS_REVIEW
+  - [x] 3.4.16 Instruction ID and idempotency key stability on replay
+  - [x] 3.4.17 Audit event written for success, skip, and error cases
 
 **Estimated**: ~3 hours
 
