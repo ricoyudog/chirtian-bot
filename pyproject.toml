@@ -31,3 +31,7 @@ select = ["E", "F", "I", "N", "W"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "live: live Claude CLI integration tests (deselected by default, run with -m live)",
+]
+addopts = "-m 'not live'"

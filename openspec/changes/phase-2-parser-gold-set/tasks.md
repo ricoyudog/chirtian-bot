@@ -84,22 +84,22 @@
 
 ## 5. Test Harness
 
-- [ ] 5.1 Implement `tests/gold_set/conftest.py` — YAML case loader: glob `cases/*.yaml`, parse, parametrize
-- [ ] 5.2 Implement `tests/gold_set/test_unit.py` (Layer 1):
-  - [ ] 5.2.1 Parametrized test: load case, mock LLM with expected-status-appropriate response, verify status, instructions, reason codes
-  - [ ] 5.2.2 Instruction ID format verification
-  - [ ] 5.2.3 Idempotency key determinism verification
-  - [ ] 5.2.4 Schema validation error → NEEDS_REVIEW test
-  - [ ] 5.2.5 Ensure no external dependency (no claude CLI, no network)
-- [ ] 5.3 Implement `tests/gold_set/test_live.py` (Layer 2):
-  - [ ] 5.3.1 Parametrized test: load case, call real ClaudeCliClient, verify with tolerances
-  - [ ] 5.3.2 Status must match exactly
-  - [ ] 5.3.3 Action + symbol must match exactly
-  - [ ] 5.3.4 quantity_pct within ±0.1 tolerance
-  - [ ] 5.3.5 Reason codes: expected subset must be present
-  - [ ] 5.3.6 Confidence and parse_span recorded but not verified
-  - [ ] 5.3.7 Mark with `@pytest.mark.live` skip marker (skip in CI by default)
-- [ ] 5.4 Add `pytest` markers in `pyproject.toml`: `live` marker for Layer 2
+- [x] 5.1 Implement `tests/gold_set/conftest.py` — YAML case loader: glob `cases/*.yaml`, parse, parametrize
+- [x] 5.2 Implement `tests/gold_set/test_unit.py` (Layer 1):
+  - [x] 5.2.1 Parametrized test: load case, mock LLM with expected-status-appropriate response, verify status, instructions, reason codes
+  - [x] 5.2.2 Instruction ID format verification
+  - [x] 5.2.3 Idempotency key determinism verification
+  - [x] 5.2.4 Schema validation error → NEEDS_REVIEW test
+  - [x] 5.2.5 Ensure no external dependency (no claude CLI, no network)
+- [x] 5.3 Implement `tests/gold_set/test_live.py` (Layer 2):
+  - [x] 5.3.1 Parametrized test: load case, call real ClaudeCliClient, verify with tolerances
+  - [x] 5.3.2 Status must match exactly
+  - [x] 5.3.3 Action + symbol must match exactly
+  - [x] 5.3.4 quantity_pct within ±0.1 tolerance
+  - [x] 5.3.5 Reason codes: expected subset must be present
+  - [x] 5.3.6 Confidence and parse_span recorded but not verified
+  - [x] 5.3.7 Mark with `@pytest.mark.live` skip marker (skip in CI by default)
+- [x] 5.4 Add `pytest` markers in `pyproject.toml`: `live` marker for Layer 2
 
 **Estimated**: ~2 hours
 

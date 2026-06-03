@@ -8,7 +8,7 @@ expected_instructions:
   - sequence: 0
     action: "option_place"
     symbol: "TSLA"
-    quantity_pct: null
+    quantity_pct: 1.0
     quantity_type: "pct"
     confidence_min: 0.8
     time_modifier: "immediate"
