@@ -16,12 +16,12 @@
 
 ## 2. Parser Data Models & Schema
 
-- [ ] 2.1 Implement `src/analyzer/parser_schema.py` — Pydantic models: `ParsedInstruction`, `ParseResult`
-- [ ] 2.2 Add `instruction_id` generation: `instr:{post_id}:{sequence}`
-- [ ] 2.3 Add `quantity_type` field: `Literal["pct", "all"]` with `quantity_pct: float | None`
-- [ ] 2.4 Add option fields: `option_type`, `option_side`, `strike`, `expiry` (all optional/nullable)
-- [ ] 2.5 Define JSON schema for LLM output — the schema passed to `complete_json` that the LLM must conform to
-- [ ] 2.6 Write `tests/test_parser_schema.py` — cover: model validation, instruction_id format, quantity_type constraints, option field combinations, invalid data rejection
+- [x] 2.1 Implement `src/analyzer/parser_schema.py` — Pydantic models: `ParsedInstruction`, `ParseResult`
+- [x] 2.2 Add `instruction_id` generation: `instr:{post_id}:{sequence}`
+- [x] 2.3 Add `quantity_type` field: `Literal["pct", "all"]` with `quantity_pct: float | None`
+- [x] 2.4 Add option fields: `option_type`, `option_side`, `strike`, `expiry` (all optional/nullable)
+- [x] 2.5 Define JSON schema for LLM output — the schema passed to `complete_json` that the LLM must conform to
+- [x] 2.6 Write `tests/test_parser_schema.py` — cover: model validation, instruction_id format, quantity_type constraints, option field combinations, invalid data rejection
 
 **Estimated**: ~1.5 hours
 
