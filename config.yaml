@@ -13,3 +13,12 @@ risk:
   symbol_whitelist:
     - AAPL
     - TSLA
+
+portfolio:
+  sizing_basis: portfolio_equity
+  buying_power_buffer: 0.98
+  price_slippage_buffer_pct: 0.5
+  rounding_mode: floor
+  fractional_shares_enabled: false
+  min_residual_notional_usd: 25
+  require_reconcile_before_sizing: true

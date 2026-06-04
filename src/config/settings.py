@@ -14,6 +14,24 @@ class RiskConfig(BaseModel):
     )
 
 
+class SizingConfig(BaseModel):
+    """Portfolio sizing configuration."""
+
+    sizing_basis: Literal["portfolio_equity"] = "portfolio_equity"
+    buying_power_buffer: float = Field(
+        default=0.98, gt=0, le=1.0, description="Safety margin on buying power"
+    )
+    price_slippage_buffer_pct: float = Field(
+        default=0.5, ge=0, description="Price slippage buffer %"
+    )
+    rounding_mode: Literal["floor"] = "floor"
+    fractional_shares_enabled: bool = False
+    min_residual_notional_usd: float = Field(
+        default=25.0, ge=0, description="Min residual to avoid tiny orders"
+    )
+    require_reconcile_before_sizing: bool = True
+
+
 class RuntimeConfig(BaseModel):
     mode: Literal["offline_replay", "shadow", "uat_confirm", "prod_confirm", "prod_auto"]
     environment: Literal["uat", "prod"]
@@ -21,6 +39,7 @@ class RuntimeConfig(BaseModel):
     account_ids: list[str] = Field(min_length=1)
     confirmation_mode: Literal["auto", "confirm", "skip"]
     risk: RiskConfig
+    portfolio: SizingConfig = Field(default_factory=SizingConfig)
 
     @field_validator("account_ids")
     @classmethod

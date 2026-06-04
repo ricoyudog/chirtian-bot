@@ -22,18 +22,18 @@
 
 ## 2. Config & Provider Protocol
 
-- [ ] 2.1 Add `SizingConfig` to `src/config/settings.py` — sizing_basis, buying_power_buffer (0.98), price_slippage_buffer_pct (0.5), rounding_mode ("floor"), fractional_shares_enabled (false), min_residual_notional_usd (25), require_reconcile_before_sizing (true)
-- [ ] 2.2 Update `config.yaml` with `portfolio:` section matching architecture doc
-- [ ] 2.3 Implement `src/portfolio/provider.py` — `AccountDataProvider` protocol:
-  - [ ] 2.3.1 `get_snapshot(account_id) -> PortfolioSnapshot`
-  - [ ] 2.3.2 `get_quote(symbol) -> Quote`
-  - [ ] 2.3.3 `get_positions(account_id) -> list[Position]`
-  - [ ] 2.3.4 `get_open_orders(account_id) -> list[OpenOrder]`
-- [ ] 2.4 Implement `FakeAccountProvider` in `src/portfolio/provider.py`:
-  - [ ] 2.4.1 Accept pre-configured snapshots, quotes via constructor
-  - [ ] 2.4.2 Support override methods for test scenarios (e.g., `set_buying_power()`, `add_position()`)
-  - [ ] 2.4.3 Default test data: equity $50,000, buying_power $10,000, a few positions
-- [ ] 2.5 Write `tests/test_provider.py` — cover: FakeAccountProvider construction, get_snapshot, get_quote, position/order/quote overrides
+- [x] 2.1 Add `SizingConfig` to `src/config/settings.py` — sizing_basis, buying_power_buffer (0.98), price_slippage_buffer_pct (0.5), rounding_mode ("floor"), fractional_shares_enabled (false), min_residual_notional_usd (25), require_reconcile_before_sizing (true)
+- [x] 2.2 Update `config.yaml` with `portfolio:` section matching architecture doc
+- [x] 2.3 Implement `src/portfolio/provider.py` — `AccountDataProvider` protocol:
+  - [x] 2.3.1 `get_snapshot(account_id) -> PortfolioSnapshot`
+  - [x] 2.3.2 `get_quote(symbol) -> Quote`
+  - [x] 2.3.3 `get_positions(account_id) -> list[Position]`
+  - [x] 2.3.4 `get_open_orders(account_id) -> list[OpenOrder]`
+- [x] 2.4 Implement `FakeAccountProvider` in `src/portfolio/provider.py`:
+  - [x] 2.4.1 Accept pre-configured snapshots, quotes via constructor
+  - [x] 2.4.2 Support override methods for test scenarios (e.g., `set_buying_power()`, `add_position()`)
+  - [x] 2.4.3 Default test data: equity $50,000, buying_power $10,000, a few positions
+- [x] 2.5 Write `tests/test_provider.py` — cover: FakeAccountProvider construction, get_snapshot, get_quote, position/order/quote overrides
 
 **Estimated**: ~2 hours
 
