@@ -101,39 +101,39 @@
 
 ## 5. Reconciler & Stop-the-World
 
-- [ ] 5.1 Extend `src/safety/runtime_guard.py`:
-  - [ ] 5.1.1 Add `ReconcileStatus` enum (OK, MISMATCH, UNKNOWN)
-  - [ ] 5.1.2 Add `_reconcile_status` field to `RuntimeGuard.__init__`
-  - [ ] 5.1.3 Add `assert_reconcile_ok()` — raises `ReconcileBlockedError` if not OK
-  - [ ] 5.1.4 Add `activate_stop(reason)` and `deactivate_stop()` methods
-  - [ ] 5.1.5 Add `is_stopped` property
-  - [ ] 5.1.6 Extend `assert_mutation_allowed()` to also check reconcile status
-- [ ] 5.2 Implement `src/portfolio/reconcile.py` — `Reconciler`:
-  - [ ] 5.2.1 `reconcile(local_snapshot, broker_snapshot, config) -> ReconcileResult`
-  - [ ] 5.2.2 Position comparison — exact match tolerance (D6)
-  - [ ] 5.2.3 Buying power comparison — ±$1 or 0.1% tolerance (D6)
-  - [ ] 5.2.4 Open order comparison — order_id set exact match (D6)
-  - [ ] 5.2.5 Generate `reconcile_id` (`recon_{uuid}`)
-  - [ ] 5.2.6 Compute snapshot hashes for comparison
-- [ ] 5.3 Implement `ReconcileGate` in `src/portfolio/reconcile.py`:
-  - [ ] 5.3.1 `check_and_gate(reconcile_result, guard, ledger) -> None`
-  - [ ] 5.3.2 Mismatch → `guard.activate_stop(reason)` + write to ledger + write diff report to `portfolio/reconciliations/`
-  - [ ] 5.3.3 OK + was stopped → requires manual clear (does NOT auto-deactivate)
-  - [ ] 5.3.4 `manual_clear(guard)` — operator-triggered deactivation
-- [ ] 5.4 Write `tests/test_reconcile.py` — cover:
-  - [ ] 5.4.1 Exact match → `status: "ok"`, no differences
-  - [ ] 5.4.2 Position quantity mismatch → `status: "mismatch"`, difference recorded
-  - [ ] 5.4.3 Buying power within tolerance → `status: "ok"`
-  - [ ] 5.4.4 Buying power exceeds tolerance → `status: "mismatch"`
-  - [ ] 5.4.5 Missing position in broker → `status: "mismatch"`
-  - [ ] 5.4.6 Extra open order in broker → `status: "mismatch"`
-  - [ ] 5.4.7 ReconcileGate activates stop on mismatch
-  - [ ] 5.4.8 `assert_reconcile_ok()` raises after mismatch
-  - [ ] 5.4.9 `assert_reconcile_ok()` passes when OK
-  - [ ] 5.4.10 Mismatch → ledger event written
-  - [ ] 5.4.11 Mismatch → diff report file written
-  - [ ] 5.4.12 Manual clear restores OK status
-  - [ ] 5.4.13 Auto-recovery does NOT happen after mismatch (even on next OK reconcile)
+- [x] 5.1 Extend `src/safety/runtime_guard.py`:
+  - [x] 5.1.1 Add `ReconcileStatus` enum (OK, MISMATCH, UNKNOWN)
+  - [x] 5.1.2 Add `_reconcile_status` field to `RuntimeGuard.__init__`
+  - [x] 5.1.3 Add `assert_reconcile_ok()` — raises `ReconcileBlockedError` if not OK
+  - [x] 5.1.4 Add `activate_stop(reason)` and `deactivate_stop()` methods
+  - [x] 5.1.5 Add `is_stopped` property
+  - [x] 5.1.6 Extend `assert_mutation_allowed()` to also check reconcile status
+- [x] 5.2 Implement `src/portfolio/reconcile.py` — `Reconciler`:
+  - [x] 5.2.1 `reconcile(local_snapshot, broker_snapshot, config) -> ReconcileResult`
+  - [x] 5.2.2 Position comparison — exact match tolerance (D6)
+  - [x] 5.2.3 Buying power comparison — ±$1 or 0.1% tolerance (D6)
+  - [x] 5.2.4 Open order comparison — order_id set exact match (D6)
+  - [x] 5.2.5 Generate `reconcile_id` (`recon_{uuid}`)
+  - [x] 5.2.6 Compute snapshot hashes for comparison
+- [x] 5.3 Implement `ReconcileGate` in `src/portfolio/reconcile.py`:
+  - [x] 5.3.1 `check_and_gate(reconcile_result, guard, ledger) -> None`
+  - [x] 5.3.2 Mismatch → `guard.activate_stop(reason)` + write to ledger + write diff report to `portfolio/reconciliations/`
+  - [x] 5.3.3 OK + was stopped → requires manual clear (does NOT auto-deactivate)
+  - [x] 5.3.4 `manual_clear(guard)` — operator-triggered deactivation
+- [x] 5.4 Write `tests/test_reconcile.py` — cover:
+  - [x] 5.4.1 Exact match → `status: "ok"`, no differences
+  - [x] 5.4.2 Position quantity mismatch → `status: "mismatch"`, difference recorded
+  - [x] 5.4.3 Buying power within tolerance → `status: "ok"`
+  - [x] 5.4.4 Buying power exceeds tolerance → `status: "mismatch"`
+  - [x] 5.4.5 Missing position in broker → `status: "mismatch"`
+  - [x] 5.4.6 Extra open order in broker → `status: "mismatch"`
+  - [x] 5.4.7 ReconcileGate activates stop on mismatch
+  - [x] 5.4.8 `assert_reconcile_ok()` raises after mismatch
+  - [x] 5.4.9 `assert_reconcile_ok()` passes when OK
+  - [x] 5.4.10 Mismatch → ledger event written
+  - [x] 5.4.11 Mismatch → diff report file written
+  - [x] 5.4.12 Manual clear restores OK status
+  - [x] 5.4.13 Auto-recovery does NOT happen after mismatch (even on next OK reconcile)
 
 **Estimated**: ~3.5 hours
 

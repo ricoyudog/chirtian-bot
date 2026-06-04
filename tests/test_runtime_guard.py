@@ -3,7 +3,7 @@
 import pytest
 
 from src.config.settings import RiskConfig, RuntimeConfig
-from src.safety.runtime_guard import RuntimeGuard
+from src.safety.runtime_guard import ReconcileStatus, RuntimeGuard
 
 
 def _make_config(**overrides):
@@ -58,14 +58,17 @@ class TestAssertMutationAllowed:
     def test_mutation_allowed_uat_confirm(self):
         config = _make_config(mode="uat_confirm", confirmation_mode="confirm")
         guard = RuntimeGuard(config)
+        guard._reconcile_status = ReconcileStatus.OK
         guard.assert_mutation_allowed()  # should not raise
 
     def test_mutation_allowed_offline_replay(self):
         config = _make_config(mode="offline_replay")
         guard = RuntimeGuard(config)
+        guard._reconcile_status = ReconcileStatus.OK
         guard.assert_mutation_allowed()  # should not raise
 
     def test_mutation_allowed_shadow(self):
         config = _make_config(mode="shadow")
         guard = RuntimeGuard(config)
+        guard._reconcile_status = ReconcileStatus.OK
         guard.assert_mutation_allowed()  # should not raise
