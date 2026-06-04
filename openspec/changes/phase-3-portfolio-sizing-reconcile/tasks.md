@@ -58,42 +58,42 @@
 
 ## 4. Sizing Engine
 
-- [ ] 4.1 Implement `src/portfolio/sizing.py` — `SizingEngine`:
-  - [ ] 4.1.1 `size(instruction, snapshot, quote, config) -> SizingDecision` — main entry point
-  - [ ] 4.1.2 Buy path (D3):
-    - [ ] 4.1.2.1 `target_notional = quantity_pct × equity`
-    - [ ] 4.1.2.2 Chain clamp: buying_power, concentration_cap, max_notional (D5 — record ALL reason codes)
-    - [ ] 4.1.2.3 `raw_quantity = capped_notional / estimated_price`
-    - [ ] 4.1.2.4 `floor(raw_quantity / lot_size) × lot_size`
-    - [ ] 4.1.2.5 `qty < min_quantity → SKIP_TOO_SMALL`
-  - [ ] 4.1.3 Sell path (D4):
-    - [ ] 4.1.3.1 `target_quantity = quantity_pct × position.quantity`
-    - [ ] 4.1.3.2 `floor(target_quantity / lot_size) × lot_size`
-    - [ ] 4.1.3.3 Clip to `position.quantity` if exceeded
-    - [ ] 4.1.3.4 `qty = 0 → SKIP_NO_POSITION`
-  - [ ] 4.1.4 Concentration cap calculation:
-    - [ ] 4.1.4.1 `current_exposure = position.market_value_usd / equity × 100`
-    - [ ] 4.1.4.2 `remaining_pct = max_concentration_pct - current_exposure`
-    - [ ] 4.1.4.3 `remaining_notional = remaining_pct / 100 × equity`
-  - [ ] 4.1.5 Open order conflict check:
-    - [ ] 4.1.5.1 Same symbol + any open order → `SIZING_NEEDS_REVIEW` + `OPEN_ORDER_CONFLICT`
-  - [ ] 4.1.6 Stale quote check:
-    - [ ] 4.1.6.1 Quote age > 15 min → `SKIP_STALE_QUOTE`
-  - [ ] 4.1.7 Write sizing decision to PortfolioLedger
-- [ ] 4.2 Write `tests/test_sizing.py` — cover all 8 required scenarios:
-  - [ ] 4.2.1 1% < 1 share → `SKIP_TOO_SMALL`
-  - [ ] 4.2.2 Buying power insufficient → clip or `SKIP_INSUFFICIENT_BUYING_POWER`
-  - [ ] 4.2.3 Lot size restriction → floor to lot or `SKIP_LOT_SIZE`
-  - [ ] 4.2.4 Concentration cap hit → clip + `MODIFY_SIZE` + `CLAMPED_CONCENTRATION` reason code
-  - [ ] 4.2.5 Sell more than position → clip to available
-  - [ ] 4.2.6 Open order conflict → `SIZING_NEEDS_REVIEW`
-  - [ ] 4.2.7 Stale quote → `SKIP_STALE_QUOTE`
-  - [ ] 4.2.8 Normal buy → `EXECUTABLE` with correct quantity and residual
-  - [ ] 4.2.9 Normal sell → `EXECUTABLE` with correct quantity
-  - [ ] 4.2.10 Sell with quantity_type "all" → sell full position
-  - [ ] 4.2.11 Multiple clamp reasons recorded simultaneously
-  - [ ] 4.2.12 Zero position sell → `SKIP_NO_POSITION`
-  - [ ] 4.2.13 Ledger event written for each sizing decision
+- [x] 4.1 Implement `src/portfolio/sizing.py` — `SizingEngine`:
+  - [x] 4.1.1 `size(instruction, snapshot, quote, config) -> SizingDecision` — main entry point
+  - [x] 4.1.2 Buy path (D3):
+    - [x] 4.1.2.1 `target_notional = quantity_pct × equity`
+    - [x] 4.1.2.2 Chain clamp: buying_power, concentration_cap, max_notional (D5 — record ALL reason codes)
+    - [x] 4.1.2.3 `raw_quantity = capped_notional / estimated_price`
+    - [x] 4.1.2.4 `floor(raw_quantity / lot_size) × lot_size`
+    - [x] 4.1.2.5 `qty < min_quantity → SKIP_TOO_SMALL`
+  - [x] 4.1.3 Sell path (D4):
+    - [x] 4.1.3.1 `target_quantity = quantity_pct × position.quantity`
+    - [x] 4.1.3.2 `floor(target_quantity / lot_size) × lot_size`
+    - [x] 4.1.3.3 Clip to `position.quantity` if exceeded
+    - [x] 4.1.3.4 `qty = 0 → SKIP_NO_POSITION`
+  - [x] 4.1.4 Concentration cap calculation:
+    - [x] 4.1.4.1 `current_exposure = position.market_value_usd / equity × 100`
+    - [x] 4.1.4.2 `remaining_pct = max_concentration_pct - current_exposure`
+    - [x] 4.1.4.3 `remaining_notional = remaining_pct / 100 × equity`
+  - [x] 4.1.5 Open order conflict check:
+    - [x] 4.1.5.1 Same symbol + any open order → `SIZING_NEEDS_REVIEW` + `OPEN_ORDER_CONFLICT`
+  - [x] 4.1.6 Stale quote check:
+    - [x] 4.1.6.1 Quote age > 15 min → `SKIP_STALE_QUOTE`
+  - [x] 4.1.7 Write sizing decision to PortfolioLedger
+- [x] 4.2 Write `tests/test_sizing.py` — cover all 8 required scenarios:
+  - [x] 4.2.1 1% < 1 share → `SKIP_TOO_SMALL`
+  - [x] 4.2.2 Buying power insufficient → clip or `SKIP_INSUFFICIENT_BUYING_POWER`
+  - [x] 4.2.3 Lot size restriction → floor to lot or `SKIP_LOT_SIZE`
+  - [x] 4.2.4 Concentration cap hit → clip + `MODIFY_SIZE` + `CLAMPED_CONCENTRATION` reason code
+  - [x] 4.2.5 Sell more than position → clip to available
+  - [x] 4.2.6 Open order conflict → `SIZING_NEEDS_REVIEW`
+  - [x] 4.2.7 Stale quote → `SKIP_STALE_QUOTE`
+  - [x] 4.2.8 Normal buy → `EXECUTABLE` with correct quantity and residual
+  - [x] 4.2.9 Normal sell → `EXECUTABLE` with correct quantity
+  - [x] 4.2.10 Sell with quantity_type "all" → sell full position
+  - [x] 4.2.11 Multiple clamp reasons recorded simultaneously
+  - [x] 4.2.12 Zero position sell → `SKIP_NO_POSITION`
+  - [x] 4.2.13 Ledger event written for each sizing decision
 
 **Estimated**: ~4 hours
 
