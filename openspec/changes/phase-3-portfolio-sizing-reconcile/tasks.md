@@ -141,25 +141,25 @@
 
 ## 6. Test Fixtures & Integration
 
-- [ ] 6.1 Create `tests/portfolio_fixtures/` directory with reusable fake snapshots:
-  - [ ] 6.1.1 `small_account.yaml` — equity $5,000, buying_power $2,000, 1-2 positions
-  - [ ] 6.1.2 `medium_account.yaml` — equity $50,000, buying_power $10,000, 5 positions
-  - [ ] 6.1.3 `no_positions.yaml` — equity $50,000, buying_power $50,000, empty positions
-  - [ ] 6.1.4 `concentrated_account.yaml` — equity $50,000, one position at 9.8%
-  - [ ] 6.1.5 `low_buying_power.yaml` — equity $50,000, buying_power $50, insufficient for 1% orders
-- [ ] 6.2 Create `tests/portfolio_fixtures/quotes/` — fake quotes:
-  - [ ] 6.2.1 `nvda.yaml` — price $180, normal quote
-  - [ ] 6.2.2 `tsla.yaml` — price $250, normal quote
-  - [ ] 6.2.3 `expensive.yaml` — price $500 (for too-small scenario)
-  - [ ] 6.2.4 `stale.yaml` — price $180, timestamp 30 min ago
-- [ ] 6.3 Write `tests/test_portfolio_integration.py` — end-to-end sizing + reconcile:
-  - [ ] 6.3.1 Happy path: snapshot → reconcile OK → size buy → EXECUTABLE
-  - [ ] 6.3.2 Happy path: snapshot → reconcile OK → size sell → EXECUTABLE
-  - [ ] 6.3.3 Reconcile mismatch → sizing blocked → manual clear → sizing works
-  - [ ] 6.3.4 Full ledger trail for a sizing + reconcile cycle
-- [ ] 6.4 Run full test suite (`pytest tests/ -m "not live"`) and verify all pass
-- [ ] 6.5 Verify all Phase 1 and Phase 2 tests still pass alongside new tests
-- [ ] 6.6 Run `ruff check` and `ruff format` on all new files
+- [x] 6.1 Create `tests/portfolio_fixtures/` directory with reusable fake snapshots:
+  - [x] 6.1.1 `small_account.yaml` — equity $5,000, buying_power $2,000, 1-2 positions
+  - [x] 6.1.2 `medium_account.yaml` — equity $50,000, buying_power $10,000, 5 positions
+  - [x] 6.1.3 `no_positions.yaml` — equity $50,000, buying_power $50,000, empty positions
+  - [x] 6.1.4 `concentrated_account.yaml` — equity $50,000, one position at 9.8%
+  - [x] 6.1.5 `low_buying_power.yaml` — equity $50,000, buying_power $50, insufficient for 1% orders
+- [x] 6.2 Create `tests/portfolio_fixtures/quotes/` — fake quotes:
+  - [x] 6.2.1 `nvda.yaml` — price $180, normal quote
+  - [x] 6.2.2 `tsla.yaml` — price $250, normal quote
+  - [x] 6.2.3 `expensive.yaml` — price $500 (for too-small scenario)
+  - [x] 6.2.4 `stale.yaml` — price $180, timestamp 30 min ago
+- [x] 6.3 Write `tests/test_portfolio_integration.py` — end-to-end sizing + reconcile:
+  - [x] 6.3.1 Happy path: snapshot → reconcile OK → size buy → EXECUTABLE
+  - [x] 6.3.2 Happy path: snapshot → reconcile OK → size sell → EXECUTABLE
+  - [x] 6.3.3 Reconcile mismatch → sizing blocked → manual clear → sizing works
+  - [x] 6.3.4 Full ledger trail for a sizing + reconcile cycle
+- [x] 6.4 Run full test suite (`pytest tests/ -m "not live"`) and verify all pass
+- [x] 6.5 Verify all Phase 1 and Phase 2 tests still pass alongside new tests
+- [x] 6.6 Run `ruff check` and `ruff format` on all new files
 
 **Estimated**: ~2 hours
 

@@ -1,0 +1,13 @@
+# Small account — equity $5,000, buying_power $2,000, 1-2 positions
+account_id: "small_001"
+equity_usd: 5000.0
+buying_power_usd: 2000.0
+positions:
+  - symbol: "NVDA"
+    quantity: 5
+    avg_cost: 175.0
+    market_value_usd: 900.0
+    side: "long"
+open_orders: []
+snapshot_timestamp: "2026-06-04T10:00:00+00:00"
+source: "fake"

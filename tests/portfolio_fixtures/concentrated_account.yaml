@@ -1,0 +1,13 @@
+# Concentrated — equity $50,000, one position at 9.8%
+account_id: "concentrated_001"
+equity_usd: 50000.0
+buying_power_usd: 15000.0
+positions:
+  - symbol: "NVDA"
+    quantity: 27
+    avg_cost: 180.0
+    market_value_usd: 4900.0
+    side: "long"
+open_orders: []
+snapshot_timestamp: "2026-06-04T10:00:00+00:00"
+source: "fake"

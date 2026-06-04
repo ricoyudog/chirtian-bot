@@ -1,0 +1,13 @@
+# Low buying power — equity $50,000, buying_power $50, insufficient for 1% orders
+account_id: "lowbp_001"
+equity_usd: 50000.0
+buying_power_usd: 50.0
+positions:
+  - symbol: "NVDA"
+    quantity: 100
+    avg_cost: 160.0
+    market_value_usd: 18000.0
+    side: "long"
+open_orders: []
+snapshot_timestamp: "2026-06-04T10:00:00+00:00"
+source: "fake"

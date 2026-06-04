@@ -1,0 +1,33 @@
+# Medium account — equity $50,000, buying_power $10,000, 5 positions
+account_id: "medium_001"
+equity_usd: 50000.0
+buying_power_usd: 10000.0
+positions:
+  - symbol: "NVDA"
+    quantity: 50
+    avg_cost: 160.0
+    market_value_usd: 9000.0
+    side: "long"
+  - symbol: "AAPL"
+    quantity: 30
+    avg_cost: 180.0
+    market_value_usd: 5400.0
+    side: "long"
+  - symbol: "MSFT"
+    quantity: 20
+    avg_cost: 400.0
+    market_value_usd: 8000.0
+    side: "long"
+  - symbol: "TSLA"
+    quantity: 10
+    avg_cost: 240.0
+    market_value_usd: 2500.0
+    side: "long"
+  - symbol: "AMD"
+    quantity: 40
+    avg_cost: 150.0
+    market_value_usd: 6000.0
+    side: "long"
+open_orders: []
+snapshot_timestamp: "2026-06-04T10:00:00+00:00"
+source: "fake"

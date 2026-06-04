@@ -1,0 +1,6 @@
+# High price — for too-small scenario
+symbol: "EXPENSIVE"
+price: 500.0
+ask: 500.50
+bid: 499.50
+timestamp: "2026-06-04T10:00:00+00:00"
