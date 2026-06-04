@@ -1,0 +1,28 @@
+parent:
+  number: 15
+  url: https://github.com/ricoyudog/chirtian-bot/issues/15
+groups:
+  - number: 1
+    name: "Portfolio Data Models"
+    issue_number: 16
+    url: https://github.com/ricoyudog/chirtian-bot/issues/16
+  - number: 2
+    name: "Config & Provider Protocol"
+    issue_number: 17
+    url: https://github.com/ricoyudog/chirtian-bot/issues/17
+  - number: 3
+    name: "Buying Power Calculator"
+    issue_number: 18
+    url: https://github.com/ricoyudog/chirtian-bot/issues/18
+  - number: 4
+    name: "Sizing Engine"
+    issue_number: 19
+    url: https://github.com/ricoyudog/chirtian-bot/issues/19
+  - number: 5
+    name: "Reconciler & Stop-the-World"
+    issue_number: 20
+    url: https://github.com/ricoyudog/chirtian-bot/issues/20
+  - number: 6
+    name: "Test Fixtures & Integration"
+    issue_number: 21
+    url: https://github.com/ricoyudog/chirtian-bot/issues/21
