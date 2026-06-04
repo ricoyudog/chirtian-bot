@@ -41,16 +41,16 @@
 
 ## 3. Buying Power Calculator
 
-- [ ] 3.1 Implement `src/portfolio/buying_power.py` — `BuyingPowerCalculator`:
-  - [ ] 3.1.1 `calculate_available(snapshot, config) -> float` — apply buffer and slippage
-  - [ ] 3.1.2 `available = buying_power × buying_power_buffer`
-  - [ ] 3.1.3 `effective_price = quote_price × (1 + price_slippage_buffer_pct / 100)`
-  - [ ] 3.1.4 Return max spendable amount after all safety margins
-- [ ] 3.2 Write `tests/test_buying_power.py` — cover:
-  - [ ] 3.2.1 Normal buying power with buffer
-  - [ ] 3.2.2 Zero buying power → 0 available
-  - [ ] 3.2.3 Slippage buffer applied correctly
-  - [ ] 3.2.4 Very small buying power rounds down to 0
+- [x] 3.1 Implement `src/portfolio/buying_power.py` — `BuyingPowerCalculator`:
+  - [x] 3.1.1 `calculate_available(snapshot, config) -> float` — apply buffer and slippage
+  - [x] 3.1.2 `available = buying_power × buying_power_buffer`
+  - [x] 3.1.3 `effective_price = quote_price × (1 + price_slippage_buffer_pct / 100)`
+  - [x] 3.1.4 Return max spendable amount after all safety margins
+- [x] 3.2 Write `tests/test_buying_power.py` — cover:
+  - [x] 3.2.1 Normal buying power with buffer
+  - [x] 3.2.2 Zero buying power → 0 available
+  - [x] 3.2.3 Slippage buffer applied correctly
+  - [x] 3.2.4 Very small buying power rounds down to 0
 
 **Estimated**: ~1 hour
 
