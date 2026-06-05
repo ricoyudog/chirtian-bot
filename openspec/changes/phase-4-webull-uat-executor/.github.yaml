@@ -1,0 +1,28 @@
+parent:
+  number: 22
+  url: https://github.com/ricoyudog/chirtian-bot/issues/22
+groups:
+  - number: 1
+    name: "Executor Data Models & Protocol"
+    issue_number: 23
+    url: https://github.com/ricoyudog/chirtian-bot/issues/23
+  - number: 2
+    name: "Webull CLI Adapter"
+    issue_number: 24
+    url: https://github.com/ricoyudog/chirtian-bot/issues/24
+  - number: 3
+    name: "Order Builder & Execution Gate"
+    issue_number: 25
+    url: https://github.com/ricoyudog/chirtian-bot/issues/25
+  - number: 4
+    name: "Manual Confirmation Flow"
+    issue_number: 26
+    url: https://github.com/ricoyudog/chirtian-bot/issues/26
+  - number: 5
+    name: "WebullAccountProvider"
+    issue_number: 27
+    url: https://github.com/ricoyudog/chirtian-bot/issues/27
+  - number: 6
+    name: "Integration Tests & Smoke Checks"
+    issue_number: 28
+    url: https://github.com/ricoyudog/chirtian-bot/issues/28

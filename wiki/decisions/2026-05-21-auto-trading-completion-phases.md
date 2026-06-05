@@ -36,7 +36,7 @@ Christian Bot 自動交易實作拆成 5 個可驗收階段。每一階段都必
 | 狀態儲存選型 | 第 1 階段 | 已決定 | SQLite durable queue + JSONL append-only audit ledger（只追加稽核帳本） + 可重建 snapshot |
 | 設定 ownership / reload policy | 第 1 階段 | 已決定 | 僅啟動時 validation；MVP 不支援 hot reload；config hash 寫入 audit |
 | 人工審核 timeout 與 override 欄位 | 第 0 + 第 4 階段 | 初始值已決定 | 15 分鐘 timeout → `EXPIRED_REVIEW`；operator 只可 confirm / skip / reduce quantity |
-| Webull integration transport | 第 4 階段 | 有預設、到第 4 階段前再確認 | 使用 `BrokerClient` adapter；預設 CLI-first，除非 MCP 在第 4 階段前被證明更安全/更易測 |
+| Webull integration transport | 第 4 階段 | 已決定 | CLI-first adapter；`BrokerClient` Protocol + `WebullCLIAdapter`；詳見 [[wiki/decisions/2026-05-21-phase-4-webull-uat-executor|Phase 4 決策]] |
 | Portfolio sizing 在 executor 之前 | 第 3 階段 | 已決定 | Executor 只接收具體 `order_quantity` |
 | Notification / alert channel | 第 5 階段外部 alert；第 1 階段 audit | MVP 最小方案已決定，live 前再選外部渠道 | MVP 需要 audit + console/runtime incident note；live capital 前必須選定並測試外部 alert |
 | Prod / live capital gate | 第 5 階段 | 已決定 | Shadow evidence + drills + 另行 go/no-go decision 後，才可進 live capital |
