@@ -11,13 +11,13 @@
 
 ## 2. Webull CLI Adapter
 
-- [ ] 2.1 在 `src/executor/webull_adapter.py` 实现 `WebullCLIAdapter` class，实现 `BrokerClient` Protocol
-- [ ] 2.2 实现 subprocess wrapper：`_run_cli(action, args)` 方法，超时 30 秒，解析 OperationResult JSON
-- [ ] 2.3 实现 `preview_order` / `place_order`：生成临时 order JSON 文件，调用 `webull-skill trading --action preview/place`
-- [ ] 2.4 实现 `get_order_status` / `cancel_order`：调用 `webull-skill trading --action detail/cancel`
-- [ ] 2.5 实现 `get_account_list` / `get_balance` / `get_positions` / `get_open_orders`：调用对应 CLI 命令
-- [ ] 2.6 定义 `BrokerTimeoutError` / `BrokerError` / `BrokerAuthError` 异常类
-- [ ] 2.7 编写 `tests/test_webull_adapter.py`：用 mock subprocess 测试所有方法，测试 timeout、错误响应、成功响应解析
+- [x] 2.1 在 `src/executor/webull_adapter.py` 实现 `WebullCLIAdapter` class，实现 `BrokerClient` Protocol
+- [x] 2.2 实现 subprocess wrapper：`_run_cli(action, args)` 方法，超时 30 秒，解析 OperationResult JSON
+- [x] 2.3 实现 `preview_order` / `place_order`：生成临时 order JSON 文件，调用 `webull-skill trading --action preview/place`
+- [x] 2.4 实现 `get_order_status` / `cancel_order`：调用 `webull-skill trading --action detail/cancel`
+- [x] 2.5 实现 `get_account_list` / `get_balance` / `get_positions` / `get_open_orders`：调用对应 CLI 命令
+- [x] 2.6 定义 `BrokerTimeoutError` / `BrokerError` / `BrokerAuthError` 异常类
+- [x] 2.7 编写 `tests/test_webull_adapter.py`：用 mock subprocess 测试所有方法，测试 timeout、错误响应、成功响应解析
 
 ## 3. Order Builder & Execution Gate
 
