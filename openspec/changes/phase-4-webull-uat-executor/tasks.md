@@ -21,27 +21,31 @@
 
 ## 3. Order Builder & Execution Gate
 
-- [ ] 3.1 在 `src/executor/order_builder.py` 实现 `OrderBuilder` class
-- [ ] 3.2 实现 `build_order_json(execution_intent)` → dict（symbol, side, order_type=LIMIT, limit_price, quantity, instrument_type=EQUITY, market=US, time_in_force=DAY, entrust_type=QTY, support_trading_session=CORE, combo_type=NORMAL）
-- [ ] 3.3 实现 `compute_request_hash(order_json)` → sha256 hex string
-- [ ] 3.4 添加参数验证：quantity > 0、limit_price > 0、symbol non-empty
-- [ ] 3.5 在 `src/executor/execution_gate.py` 实现 `ExecutionGate` class
-- [ ] 3.6 实现 environment guard：environment != "uat" → raise EnvironmentBlockedError
-- [ ] 3.7 实现 execution-level idempotency guard：查询 AuditLedger 是否已有同 idempotency_key 的 place_order 记录
-- [ ] 3.8 实现 ORDER_UNKNOWN 状态转换：place_order timeout/unknown → status=ORDER_UNKNOWN，后续只允许 get_order_status/reconcile
-- [ ] 3.9 实现 AuditLedger 集成：每次 ExecutionAttempt 写入 event_type="execution_attempt"
-- [ ] 3.10 编写 `tests/test_order_builder.py`：验证 order JSON 生成、request hash 确定性、参数验证
-- [ ] 3.11 编写 `tests/test_execution_gate.py`：验证环境 guard、幂等 guard、ORDER_UNKNOWN 流转、audit 写入
+- [x] 3.1 在 `src/executor/order_builder.py` 实现 `OrderBuilder` class
+- [x] 3.2 实现 `build_order_json(execution_intent)` → dict（symbol, side, order_type=LIMIT, limit_price, quantity, instrument_type=EQUITY, market=US, time_in_force=DAY, entrust_type=QTY, support_trading_session=CORE, combo_type=NORMAL）
+- [x] 3.3 实现 `compute_request_hash(order_json)` → sha256 hex string
+- [x] 3.4 添加参数验证：quantity > 0、limit_price > 0、symbol non-empty
+- [x] 3.5 在 `src/executor/execution_gate.py` 实现 `ExecutionGate` class
+- [x] 3.6 实现 environment guard：environment != "uat" → raise EnvironmentBlockedError
+- [x] 3.7 实现 execution-level idempotency guard：查询 AuditLedger 是否已有同 idempotency_key 的 place_order 记录
+- [x] 3.8 实现 ORDER_UNKNOWN 状态转换：place_order timeout/unknown → status=ORDER_UNKNOWN，后续只允许 get_order_status/reconcile
+- [x] 3.9 实现 AuditLedger 集成：每次 ExecutionAttempt 写入 event_type="execution_attempt"
+- [x] 3.10 编写 `tests/test_order_builder.py`：验证 order JSON 生成、request hash 确定性、参数验证
+- [x] 3.11 编写 `tests/test_execution_gate.py`：验证环境 guard、幂等 guard、ORDER_UNKNOWN 流转、audit 写入
 
 ## 4. Manual Confirmation Flow
 
-- [ ] 4.1 在 `src/executor/confirmation.py` 实现 `ConfirmationManager` class
-- [ ] 4.2 实现 `enter_review(execution_intent, work_queue)`：将 ExecutionIntent status 设为 HUMAN_REVIEW_PENDING，enqueue 到 WorkQueue with TTL=15min
-- [ ] 4.3 实现 `confirm(execution_id)` → status 变为 ready，继续执行
-- [ ] 4.4 实现 `skip(execution_id)` → status 变为 CANCELLED，不调用 broker
-- [ ] 4.5 实现 `reduce_quantity(execution_id, new_qty, operator)` → 验证 new_qty < original，更新 quantity，写入 AuditLedger（event_type="manual_override"）
-- [ ] 4.6 实现 timeout 处理：WorkQueue lease 过期 → status 变为 EXPIRED_REVIEW
-- [ ] 4.7 编写 `tests/test_confirmation.py`：验证 confirm/skip/reduce_quantity/timeout 四条路径，验证 reduce 拒绝 increase，验证 audit trail
+- [x] 4.1 在 `src/executor/confirmation.py` 实现 `ConfirmationManager` class
+- [x] 4.2 实现 `enter_review(execution_intent, work_queue)`：将 ExecutionIntent status 设为 HUMAN_REVIEW_PENDING，enqueue 到 WorkQueue with TTL=15min
+- [x] 4.3 实现 `confirm(execution_id)` → status 变为 ready，继续执行
+- [x] 4.4 实现 `skip(execution_id)` → status 变为 CANCELLED，不调用 broker
+- [x] 4.5 实现 `reduce_quantity(execution_id, new_qty, operator)` → 验证 new_qty < original，更新 quantity，写入 AuditLedger（event_type="manual_override"）
+- [x] 4.6 实现 timeout 处理：WorkQueue lease 过期 → status 变为 EXPIRED_REVIEW
+- [x] 4.7 编写 `tests/test_confirmation.py`：验证 confirm/skip/reduce_quantity/timeout 四条路径，验证 reduce 拒绝 increase，验证 audit trail
+- [x] 4.8 Fix `enter_review()`：移除非确定性 `lease()` 调用，改用内部 `_deadlines` dict 存储 deadline（entered_at + 15min）
+- [x] 4.9 Fix `check_timeouts()`：比较存储的 deadline 而非 WorkQueue lease expiry，移除对 `job.lease_expires_at` 的依赖
+- [x] 4.10 Fix `reduce_quantity()`：添加显式 `new_qty >= 1` 验证，防止 `model_copy` 绕过 Pydantic `ge=1` 约束
+- [x] 4.11 Fix lint：移除 unused import、排序 imports、拆分长行、重命名 `test_reduce_rejects_zero_quantity` → 验证正确拒绝零数量
 
 ## 5. WebullAccountProvider
 

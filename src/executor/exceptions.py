@@ -15,3 +15,11 @@ class BrokerTimeoutError(BrokerError):
 
 class BrokerAuthError(BrokerError):
     """Broker authentication failed (invalid or expired credentials)."""
+
+
+class EnvironmentBlockedError(BrokerError):
+    """Execution blocked because the runtime environment is not permitted."""
+
+
+class DuplicateExecutionError(BrokerError):
+    """A successful execution attempt with the same idempotency key already exists."""
