@@ -75,7 +75,7 @@ class WebullCLIAdapter:
             parsed = json.loads(stdout)
         except json.JSONDecodeError as exc:
             raise BrokerError(
-                f"webull-skill returned non-JSON output",
+                "webull-skill returned non-JSON output",
                 detail=stdout[:500],
             ) from exc
 
@@ -195,3 +195,7 @@ class WebullCLIAdapter:
         if isinstance(payload, list):
             return payload
         return payload.get("orders", []) if isinstance(payload, dict) else []
+
+    def get_stock_snapshot(self, symbol: str) -> dict:
+        """Get stock snapshot / quote data for a single symbol."""
+        return self._run_cli(["stock-snapshot", "--symbol", symbol])

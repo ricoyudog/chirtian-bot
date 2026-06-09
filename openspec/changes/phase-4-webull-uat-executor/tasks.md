@@ -49,24 +49,26 @@
 
 ## 5. WebullAccountProvider
 
-- [ ] 5.1 在 `src/portfolio/provider.py` 新增 `WebullAccountProvider` class，实现 `AccountDataProvider` Protocol
-- [ ] 5.2 实现 `get_snapshot(account_id)`：调用 balance + positions + open_orders → 组装 PortfolioSnapshot(source="webull")
-- [ ] 5.3 实现 `get_quote(symbol)`：调用 stock-snapshot → 转换为 Quote model
-- [ ] 5.4 实现 `get_positions(account_id)`：调用 positions CLI → 转换为 list[Position]
-- [ ] 5.5 实现 `get_open_orders(account_id)`：调用 open orders CLI → 转换为 list[OpenOrder]
-- [ ] 5.6 错误处理：CLI timeout/auth failure 直接抛出 BrokerTimeoutError/BrokerAuthError，不回退 fake data
-- [ ] 5.7 编写 `tests/test_webull_account_provider.py`：用 mock WebullCLIAdapter 测试所有方法，验证 source="webull"，验证错误不回退
+- [x] 5.1 在 `src/portfolio/provider.py` 新增 `WebullAccountProvider` class，实现 `AccountDataProvider` Protocol
+- [x] 5.2 实现 `get_snapshot(account_id)`：调用 balance + positions + open_orders → 组装 PortfolioSnapshot(source="webull")
+- [x] 5.3 实现 `get_quote(symbol)`：调用 stock-snapshot → 转换为 Quote model
+- [x] 5.4 实现 `get_positions(account_id)`：调用 positions CLI → 转换为 list[Position]
+- [x] 5.5 实现 `get_open_orders(account_id)`：调用 open orders CLI → 转换为 list[OpenOrder]
+- [x] 5.6 错误处理：CLI timeout/auth failure 直接抛出 BrokerTimeoutError/BrokerAuthError，不回退 fake data
+- [x] 5.7 编写 `tests/test_webull_account_provider.py`：用 mock WebullCLIAdapter 测试所有方法，验证 source="webull"，验证错误不回退
+- [x] 5.8 Fix `get_quote()` null guard：`"ask" in raw` → `raw.get("ask") is not None`，防止 API 返回 `{"ask": null}` 时 `float(None)` TypeError
+- [x] 5.9 添加测试：验证 `get_quote()` 在 ask/bid 为 null 时返回 `None` 而非抛出异常
 
 ## 6. Integration Tests & Smoke Checks
 
-- [ ] 6.1 编写 `tests/test_executor_integration.py`：端到端 SizingDecision → ExecutionIntent → OrderBuilder → preview → confirm → place flow（mock broker）
-- [ ] 6.2 编写 idempotency double-place guard 测试：同一 idempotency_key 第二次 place_order 必须 blocked
-- [ ] 6.3 编写 ORDER_UNKNOWN integration 测试：place_order timeout → get_order_status → reconcile
-- [ ] 6.4 编写 manual confirmation timeout integration 测试：15 min timeout → EXPIRED_REVIEW
-- [ ] 6.5 编写 UAT smoke test fixture：`tests/smoke/test_webull_uat_smoke.py`（需 UAT credential，标记 @pytest.mark.skipif）
-- [ ] 6.6 Smoke test: account-list 返回非空列表
-- [ ] 6.7 Smoke test: balance 返回有效数值
-- [ ] 6.8 Smoke test: positions 返回 list
-- [ ] 6.9 Smoke test: open-orders 返回 list
-- [ ] 6.10 Smoke test: preview order → cancel（不实际 place）完整流程
-- [ ] 6.11 运行全量测试 `pytest`，确认无回归
+- [x] 6.1 编写 `tests/test_executor_integration.py`：端到端 SizingDecision → ExecutionIntent → OrderBuilder → preview → confirm → place flow（mock broker）
+- [x] 6.2 编写 idempotency double-place guard 测试：同一 idempotency_key 第二次 place_order 必须 blocked
+- [x] 6.3 编写 ORDER_UNKNOWN integration 测试：place_order timeout → get_order_status → reconcile
+- [x] 6.4 编写 manual confirmation timeout integration 测试：15 min timeout → EXPIRED_REVIEW
+- [x] 6.5 编写 UAT smoke test fixture：`tests/smoke/test_webull_uat_smoke.py`（需 UAT credential，标记 @pytest.mark.skipif）
+- [x] 6.6 Smoke test: account-list 返回非空列表
+- [x] 6.7 Smoke test: balance 返回有效数值
+- [x] 6.8 Smoke test: positions 返回 list
+- [x] 6.9 Smoke test: open-orders 返回 list
+- [x] 6.10 Smoke test: preview order → cancel（不实际 place）完整流程
+- [x] 6.11 运行全量测试 `pytest`，确认无回归
