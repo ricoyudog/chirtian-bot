@@ -1,7 +1,7 @@
 ---
 type: wiki
 created: 2026-05-20
-updated: 2026-05-20
+updated: 2026-06-11
 tags: [operations, runbook, trading, auto-trading]
 status: draft
 ---
@@ -15,12 +15,66 @@ status: draft
 | Mode | Description | Mutating Orders |
 |---|---|---|
 | `offline_replay` | historical replay / parser tests | no |
-| `shadow` | live poll + parse + decision, no broker order | no |
+| `shadow` | 模擬倉觀察期：完整 pipeline 執行，收集延遲/穩定性指標 | yes, UAT only (paper trading) |
 | `uat_confirm` | UAT preview/place, every order manually confirmed | yes, UAT only |
 | `prod_confirm` | prod with manual confirmation | later only |
 | `prod_auto` | prod auto execution | out of MVP |
 
-MVP allowed mode: `uat_confirm` only.
+MVP allowed mode: `uat_confirm` only. Shadow mode 用於觀察期驗證（Phase 5）。
+
+---
+
+## 1.5 Shadow Observation Operations
+
+Phase 5 實作的觀察期基礎設施。用於模擬倉實跑，收集 pipeline 穩定性數據。
+
+### CLI 操作
+
+```bash
+# 啟動觀察期
+python -m src.shadow observe start
+
+# 查看狀態
+python -m src.shadow observe status
+
+# 產生 shadow run summary
+python -m src.shadow observe summary
+
+# 結束觀察期
+python -m src.shadow observe stop
+```
+
+### 觀察期門檻
+
+- 最短 1 週 + 至少 10 個訊號處理
+- 1 週內訊號不足 → 自動延長，最長 4 週
+- 4 週仍未達 10 個訊號 → 暫停，檢討訊號來源
+
+### 收集指標
+
+| 指標 | 目標 |
+|---|---|
+| stale signal rate | ≤5%（pipeline 延遲造成，非市場休市） |
+| same-day completion rate | 待觀察 |
+| NEEDS_REVIEW rate | 待觀察 |
+| duplicate prevented count | 待觀察 |
+| reconcile mismatch count | 0 |
+
+### Kill Switch Drill
+
+```python
+from src.shadow.drill import AlertDrillRunner
+drill = AlertDrillRunner(ledger, incidents_dir="runtime/incidents")
+result = drill.run_drill()  # 自動通過（測試）
+# 真錢前需 operator 確認的端到端演練
+```
+
+### Go/No-Go Gate
+
+真錢前必須：
+- `runtime/incidents/` 有至少一個成功的 drill 結果
+- `runtime/shadow_summaries/` 有觀察期 summary
+- 所有 go/no-go checklist 項目通過
 
 ---
 

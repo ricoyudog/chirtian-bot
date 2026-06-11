@@ -3,7 +3,7 @@ type: decision
 created: 2026-05-21
 updated: 2026-05-21
 tags: [decision, auto-trading, implementation, phases]
-status: proposed
+status: accepted
 ---
 
 # 自動交易完成階段劃分
@@ -70,10 +70,13 @@ Christian Bot 自動交易實作拆成 5 個可驗收階段。每一階段都必
 - 同一 `idempotency_key` 最多一次 broker `place_order`。
 - Manual confirmation timeout 可驗證。
 
-### 第 5 階段 — 影子模式到真錢 gate
-- 影子模式收集 parser/TA latency、same-day completion、skip/review rate、stale rate。
-- Kill switch drill 與 rollback drill 完成。
+### 第 5 階段 — 影子模式到真錢 gate ✅ 已完成 (2026-06-11)
+- 影子模式以模擬倉直接執行，收集 parser/TA latency、same-day completion、skip/review rate、stale rate。
+- Kill switch drill 與 rollback drill 框架已建（`AlertDrillRunner`）。
+- 觀察期：1 週 + 10 訊號，最長 4 週，stale rate ≤5%。
 - 小額真錢計畫另行批准；prod auto 仍 out of MVP。
+- 實作：`src/shadow/` 模組（metrics、runner、state、drill、wiring）。
+- 63 個自動化測試通過，QA passed，GitHub issues #29-#33 done。
 
 ## 相關決策
 
