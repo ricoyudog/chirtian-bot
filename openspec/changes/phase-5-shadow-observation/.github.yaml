@@ -1,0 +1,20 @@
+parent:
+  number: 29
+  url: https://github.com/ricoyudog/chirtian-bot/issues/29
+groups:
+  - number: 1
+    name: "Metrics Collector"
+    issue_number: 30
+    url: https://github.com/ricoyudog/chirtian-bot/issues/30
+  - number: 2
+    name: "Observation Runner"
+    issue_number: 31
+    url: https://github.com/ricoyudog/chirtian-bot/issues/31
+  - number: 3
+    name: "Alert Drill"
+    issue_number: 32
+    url: https://github.com/ricoyudog/chirtian-bot/issues/32
+  - number: 4
+    name: "Integration & Documentation"
+    issue_number: 33
+    url: https://github.com/ricoyudog/chirtian-bot/issues/33

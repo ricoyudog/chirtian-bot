@@ -3,7 +3,7 @@ type: decision
 created: 2026-05-21
 updated: 2026-05-21
 tags: [decision, auto-trading, phase-5, shadow, prod, live-gate]
-status: proposed
+status: accepted
 ---
 
 # 第 5 階段 — 任何真錢前先有影子模式觀察證據
@@ -12,9 +12,19 @@ status: proposed
 
 UAT executor 完成後，先進 shadow/evidence phase。任何 live capital 或 prod mode 都要另過 go/no-go gate，不因 UAT 成功自動開啟。
 
-## 影子模式目的
+## Phase 4 UAT 與 Phase 5 的關係
 
-影子模式的價值是觀察 pipeline 是否在真實時間壓力下穩定，而不是追求收益證明。
+不需要獨立的 UAT 階段。模擬倉本身就是測試環境 — Phase 5 的模擬倉觀察期同時涵蓋 UAT 驗證。核心流程（偵測 → 解析 → TA 確認 → 下單）在模擬倉跑通即可。
+
+## 影子模式（以模擬倉代替）
+
+Webull 帳戶目前為模擬倉，因此不需要額外建影子模式。直接用模擬倉跑實戰等級測試即可：
+
+- 真實下單流程，但無真錢風險
+- 真實延遲數據（TA、解析、執行）
+- 真實訂單狀態（可驗證 reconcile、duplicate prevention）
+
+觀察期：**1 週 + 至少 10 個訊號處理**。若 1 週內訊號不足，自動延長至滿足門檻，最長 4 週。若 4 週仍未達 10 個訊號，先暫停檢討訊號來源。
 
 必要觀察指標：
 - detection latency
@@ -22,7 +32,7 @@ UAT executor 完成後，先進 shadow/evidence phase。任何 live capital 或 
 - Claude CLI latency/error rate
 - TA latency / unavailable rate
 - same-day completion rate
-- stale signal rate
+- stale signal rate（pipeline 延遲導致，目標 ≤5%；週末訊號算 deferred 不算 stale）
 - NEEDS_REVIEW rate
 - skip/reject/modify reasons
 - duplicate prevented count
@@ -37,7 +47,11 @@ MVP 在真錢前可先使用：
 
 任何真錢前，必須明確選定並測試 alert channel。可接受候選包括：有 operator 主動盯盤的 terminal-only、Telegram/Discord/email，或其他已記錄渠道。若沒有測試過 alert channel，live capital = `NO_GO`。
 
+**Alert channel 測試標準**：必須完成端到端演練 — 從模擬偵測異常、觸發 kill switch、alert 送達、到 operator 確認處理，全流程驗證。單純發一條測試訊息不算通過。
+
 ## 小額真錢前的 go/no-go
+
+**決策者：operator（即專案 owner）。** 決策必須記錄在 `wiki/decisions/`，作為審計軌跡。
 
 進入小額真錢前：
 - kill switch drill 已完成
