@@ -66,6 +66,40 @@ class PortfolioLedger:
         except (json.JSONDecodeError, FileNotFoundError):
             return False
 
+    # ------------------------------------------------------------------
+    # Baseline snapshot (reconcile bootstrap)
+    # ------------------------------------------------------------------
+
+    _BASELINE_TYPE = "baseline_snapshot"
+
+    def has_baseline(self) -> bool:
+        """Return True if at least one baseline snapshot has been recorded."""
+        return bool(self.query(event_type=self._BASELINE_TYPE))
+
+    def record_baseline(self, snapshot: Any) -> None:
+        """Record a portfolio snapshot as the local baseline.
+
+        Used by the orchestrator to bootstrap / refresh the local view of
+        account state that subsequent reconciles compare against.
+        """
+        self.append(
+            self._BASELINE_TYPE,
+            {
+                "account_id": snapshot.account_id,
+                "snapshot": snapshot.model_dump(mode="json"),
+            },
+            correlation_id=snapshot.account_id,
+        )
+
+    def get_baseline(self) -> Optional[Any]:
+        """Return the most recently recorded baseline snapshot, or None."""
+        events = self.query(event_type=self._BASELINE_TYPE)
+        if not events:
+            return None
+        from src.portfolio.models import PortfolioSnapshot
+
+        return PortfolioSnapshot.model_validate(events[-1]["data"]["snapshot"])
+
     def _read_all(self) -> list[dict[str, Any]]:
         entries = []
         try:

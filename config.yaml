@@ -1,10 +1,14 @@
+# Paper / UAT configuration.
+# mode=uat_confirm + confirmation_mode=auto places real (paper-account) orders
+# without a manual gate. Before any real capital: flip confirmation_mode back
+# to `confirm` and pass the Phase 5 go/no-go.
 runtime:
-  mode: offline_replay          # offline_replay | shadow | uat_confirm | prod_confirm | prod_auto
+  mode: uat_confirm             # offline_replay | shadow | uat_confirm | prod_confirm | prod_auto
   environment: uat              # uat | prod
   region: US
   account_ids:
     - ACC001
-  confirmation_mode: confirm    # auto | confirm | skip
+  confirmation_mode: auto       # auto | confirm | skip
 
 risk:
   max_notional_usd: 10000

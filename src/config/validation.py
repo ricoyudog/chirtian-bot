@@ -13,9 +13,13 @@ def load_config(path: str | Path) -> RuntimeConfig:
     """Load config from YAML file and return validated RuntimeConfig."""
     with open(path) as f:
         raw = yaml.safe_load(f)
-    # YAML has nested structure: {runtime: {...}, risk: {...}}
+    # YAML has nested structure: {runtime: {...}, risk: {...}, portfolio: {...}}
     # Flatten into the shape RuntimeConfig expects
-    flat = {**raw.get("runtime", {}), "risk": raw.get("risk", {})}
+    flat = {
+        **raw.get("runtime", {}),
+        "risk": raw.get("risk", {}),
+        "portfolio": raw.get("portfolio", {}),
+    }
     return RuntimeConfig.model_validate(flat)
 
 
