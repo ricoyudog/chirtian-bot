@@ -1,7 +1,7 @@
 ---
 type: decision
 created: 2026-05-21
-updated: 2026-05-21
+updated: 2026-06-15
 tags: [decision, auto-trading, implementation, phases]
 status: accepted
 ---
@@ -24,6 +24,10 @@ Christian Bot 自動交易實作拆成 5 個可驗收階段。每一階段都必
 | 3 | Portfolio sizing 與對帳 | `quantity_pct` 轉成可執行股數；Webull/local reconcile gate | 不送出訂單 |
 | 4 | UAT Executor | Webull UAT preview/place/cancel/status；人工確認；冪等執行 | 不開 prod |
 | 5 | Shadow 到真錢 gate | shadow 觀察證據、kill-switch drill、小額真錢 go/no-go | 不做 prod auto |
+
+## 階段整合（Orchestrator）
+
+Phase 0–5 各模組已全部完成（2026-06-11）。但它們原本各自獨立、沒有運行時膠水：沒有代碼呼叫 `place_order`，shadow runner 是佔位骨架。**2026-06-15 補上端到端 orchestrator**（`src/pipeline/`），把 parse→TA fusion→sizing→gate→place 串成可執行 pipeline，模擬倉可下單。詳見 [[wiki/decisions/2026-06-15-pipeline-orchestrator]]。剩餘 blocker 僅環境前置：`webull-skill` CLI + `WEBULL_UAT_ACCOUNT_ID`。
 
 ## 開工前決策覆蓋表
 

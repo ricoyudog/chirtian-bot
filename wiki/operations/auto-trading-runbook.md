@@ -1,7 +1,7 @@
 ---
 type: wiki
 created: 2026-05-20
-updated: 2026-06-11
+updated: 2026-06-15
 tags: [operations, runbook, trading, auto-trading]
 status: draft
 ---
@@ -21,6 +21,8 @@ status: draft
 | `prod_auto` | prod auto execution | out of MVP |
 
 MVP allowed mode: `uat_confirm` only. Shadow mode 用於觀察期驗證（Phase 5）。
+
+> Paper/UAT 下可用 `mode: uat_confirm` + `confirmation_mode: auto`：`RuntimeGuard` 只硬擋 `prod + auto`，`environment: uat + auto` 允許（模擬倉免人工閘門）。**真錢前必須改回 `confirmation_mode: confirm` 並過 go/no-go。**
 
 ---
 
@@ -75,6 +77,32 @@ result = drill.run_drill()  # 自動通過（測試）
 - `runtime/incidents/` 有至少一個成功的 drill 結果
 - `runtime/shadow_summaries/` 有觀察期 summary
 - 所有 go/no-go checklist 項目通過
+
+---
+
+## 1.6 Pipeline Orchestrator（paper/UAT 下單）
+
+`src/pipeline/` 把 parse→TA fusion→sizing→gate→place 串成可執行 pipeline（詳見 [[wiki/decisions/2026-06-15-pipeline-orchestrator]]）。
+
+### CLI
+
+```bash
+# 直接指令注入（最快驗證下單鏈路，跳過 LLM parser）
+python -m src.pipeline run-direct --symbol AAPL --action BUY --pct 1 --ta real
+
+# 完整真實路徑：帖文 → claude 解析 → TA → sizing → 下單
+python -m src.pipeline run --text "加倉AAPL 1%" --post-id smoke001 --ta real
+
+# 查看最近 activity（execution_attempt / order_placed / bootstrap）
+python -m src.pipeline status
+```
+
+### 關鍵行為
+- `--ta real|stub|skip`：真實 TradingAgents（~30min/ticker）/ 確定性 stub / 跳過 double-confirmation。
+- 帳號解析：`WEBULL_UAT_ACCOUNT_ID` 環境變數 > `config.runtime.account_ids`。
+- **首次運行 reconcile bootstrap**：本地無 baseline 時以 broker 快照為基準、`mark_reconcile_ok`、寫 `bootstrap_sync` audit；之後跑真實 diff，mismatch → stop-the-world。每次成功下單後重抓 baseline，避免自身交易被誤判為偏離。
+- 幂等：同 `idempotency_key` 二次 → `blocked`（`DUPLICATE_EXECUTION`）。
+- 前置：`webull-skill` 在 PATH 且已登入、`WEBULL_UAT_ACCOUNT_ID` 已設、（`run` 模式）`claude` 可用。
 
 ---
 
