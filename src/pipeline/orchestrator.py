@@ -435,6 +435,7 @@ class TradingPipeline:
         response = place_result if isinstance(place_result, dict) else {"raw": str(place_result)}
         attempt = ExecutionAttempt(
             execution_id=intent.execution_id,
+            idempotency_key=intent.idempotency_key,
             attempt_no=1,
             operation="place_order",
             request_hash=request_hash,
@@ -442,17 +443,9 @@ class TradingPipeline:
             status="success",
             response=response,
         )
-        # Embed idempotency_key into the event data so ExecutionGate.check_idempotency
-        # can detect duplicates. ExecutionGate.record_attempt alone omits the key
-        # (it is not a field on ExecutionAttempt) — see test_executor_integration.
-        self._audit.append(
-            AuditEvent(
-                event_type="execution_attempt",
-                source="TradingPipeline",
-                data={**attempt.model_dump(), "idempotency_key": intent.idempotency_key},
-                correlation_id=intent.execution_id,
-            )
-        )
+        # record_attempt persists the attempt (including idempotency_key) so a
+        # later check_idempotency with the same key blocks a duplicate place.
+        self._execution_gate.record_attempt(attempt)
         self._portfolio_ledger.append(
             "order_placed",
             {

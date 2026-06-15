@@ -9,7 +9,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
 # ---------------------------------------------------------------------------
 # Execution status literals
 # ---------------------------------------------------------------------------
@@ -70,6 +69,11 @@ class ExecutionAttempt(BaseModel):
 
     attempt_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     execution_id: str = Field(min_length=1)
+    # Idempotency key of the owning ExecutionIntent. Persisted so that
+    # ExecutionGate.check_idempotency can detect duplicate place_order
+    # attempts recorded via record_attempt(). Defaults to "" for backward
+    # compatibility with attempts constructed without an owning intent.
+    idempotency_key: str = Field(default="")
     attempt_no: int = Field(ge=1)
     operation: AttemptOperation
     request_hash: str = Field(min_length=1)

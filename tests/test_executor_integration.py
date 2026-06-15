@@ -273,6 +273,40 @@ class TestIdempotencyDoublePlaceGuard:
         with pytest.raises(DuplicateExecutionError, match=intent.idempotency_key):
             gate.check_idempotency(intent.idempotency_key)
 
+    def test_record_attempt_blocks_duplicate(
+        self, ledger: AuditLedger, config: RuntimeConfig,
+    ):
+        """record_attempt() alone must persist idempotency_key so a later
+        check_idempotency() with the same key blocks a duplicate place_order.
+
+        Regression guard: previously record_attempt omitted idempotency_key
+        (it was not a field on ExecutionAttempt), so duplicate detection
+        silently failed unless the caller manually embedded the key.
+        """
+        gate = ExecutionGate(config, ledger)
+        builder = OrderBuilder()
+
+        sizing = _make_sizing()
+        intent = build_execution_intent(sizing, config)
+        assert intent is not None
+
+        order_json = builder.build_order_json(intent)
+        req_hash = compute_request_hash(order_json)
+
+        attempt = ExecutionAttempt(
+            execution_id=intent.execution_id,
+            idempotency_key=intent.idempotency_key,
+            attempt_no=1,
+            operation="place_order",
+            request_hash=req_hash,
+            status="success",
+            broker_order_id="ORD_FIRST",
+        )
+        gate.record_attempt(attempt)
+
+        with pytest.raises(DuplicateExecutionError, match=intent.idempotency_key):
+            gate.check_idempotency(intent.idempotency_key)
+
     def test_preview_then_place_not_blocked(
         self, ledger: AuditLedger, config: RuntimeConfig,
     ):
