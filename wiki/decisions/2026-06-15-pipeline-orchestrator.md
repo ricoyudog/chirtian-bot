@@ -54,9 +54,19 @@ python -m src.pipeline status   # 看 audit / order_placed / bootstrap
 
 ## 狀態
 
-完成。**860 tests passed**（+11 orchestrator、+1 idempotency 回歸）。全鏈路已用真實 `build_pipeline` 工廠確認（fake I/O）：happy path 下單成功、重複鍵被擋、ledger 證據齊全。真實 CLI 一路通到 broker 層。
+完成。**856 tests passed**。全鏈路已用真實 `build_pipeline` 工廠確認（fake I/O）：happy path 下單成功、重複鍵被擋、ledger 證據齊全。
 
-**Live run 前置（環境，非代碼）**：`webull-skill` CLI 須在 PATH 且已登入、`WEBULL_UAT_ACCOUNT_ID` 須設定。本機目前缺這兩者，故尚未實打模擬單。
+**broker 傳輸已從假設的 `webull-skill` 文本 CLI 改為 Webull HK OpenAPI SDK shim**（見 [[#broker-傳輸-webull-hk-openapi]]）。**已實測上線模擬倉**：balance / AAPL quote / positions / open-orders / preview 全部成功；place 已到達 broker，唯一被擋是行事曆（非交易日測試 → `OAUTH_OPENAPI_NO_TRADING_DAY`）。下一個美股交易日重跑即成交。
+
+## broker 傳輸（Webull HK OpenAPI）
+
+實際帳號是 **Webull HK**（`developer.webull.hk`）模擬倉，交易美股（market=US、region_id=hk、environment=uat）。`webull-skill` CLI 成功時只輸出人類可讀文本、無 JSON 模式，無法程式解析，故：
+
+- `scripts/webull_json.py`：**持久化 shim**，由 `.venv-webull/bin/python`（官方 SDK 需 <3.14）執行，複用 webull-skill 的 `.env`+token，stdin/stdout 行 JSON；把 SDK 回應歸一化成 provider 期望的形狀。SDK 只 init 一次（避開 token 10 req/30s 限流）。
+- `WebullCLIAdapter`：保活該 shim（Popen + 行協議 + selectors 有界讀）。方法簽名不變，provider/orchestrator 不受影響。
+- 憑證在 `.env`（gitignored）；plaintext `模擬倉 key.md` 已 gitignore。
+
+**Live run 前置（環境，非代碼）**：`.venv-webull/` 已裝好 SDK + 已 2FA（token 在 `webull-openapi-skills-main/conf/`）；設 `WEBULL_UAT_ACCOUNT_ID` 即可跑。
 
 ## 相關
 

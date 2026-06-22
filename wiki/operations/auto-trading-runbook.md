@@ -99,10 +99,11 @@ python -m src.pipeline status
 
 ### 關鍵行為
 - `--ta real|stub|skip`：真實 TradingAgents（~30min/ticker）/ 確定性 stub / 跳過 double-confirmation。
+- broker 傳輸：Webull HK OpenAPI 經 `scripts/webull_json.py` 持久化 SDK shim（`.venv-webull/bin/python`，複用 webull-skill `.env`+token）。詳見 [[wiki/decisions/2026-06-15-pipeline-orchestrator]]。
 - 帳號解析：`WEBULL_UAT_ACCOUNT_ID` 環境變數 > `config.runtime.account_ids`。
 - **首次運行 reconcile bootstrap**：本地無 baseline 時以 broker 快照為基準、`mark_reconcile_ok`、寫 `bootstrap_sync` audit；之後跑真實 diff，mismatch → stop-the-world。每次成功下單後重抓 baseline，避免自身交易被誤判為偏離。
 - 幂等：同 `idempotency_key` 二次 → `blocked`（`DUPLICATE_EXECUTION`）。
-- 前置：`webull-skill` 在 PATH 且已登入、`WEBULL_UAT_ACCOUNT_ID` 已設、（`run` 模式）`claude` 可用。
+- 前置：`.venv-webull/` 已裝 SDK 且 token 有效（首次需 `webull-skill auth` 做 2FA）、`WEBULL_UAT_ACCOUNT_ID` 已設、（`run` 模式）`claude` 可用。
 
 ---
 

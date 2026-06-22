@@ -1,6 +1,6 @@
 ---
 type: wiki
-updated: 2026-06-15
+updated: 2026-06-22
 tags: [hot, entry]
 pinned: true
 ---
@@ -10,24 +10,27 @@ pinned: true
 > 約 500 字 | 硬上限 600 字 | 每次 session 更新 | 人與 AI 的第一入口
 
 ## 進行中變更
-- **端到端 orchestrator 已完成並 commit**（`src/pipeline/`）。Phase 0–5 各模組首次串成可執行 pipeline，模擬倉可下單。
-- 剩餘 blocker 僅環境前置：本機缺 `webull-skill` CLI + `WEBULL_UAT_ACCOUNT_ID`，故尚未實打模擬單。代碼鏈路已用真實工廠確認通。
+- **Webull HK OpenAPI 接入完成並已實測上線**(模擬倉)。orchestrator 全鏈路經真實 broker 跑通:balance / quote / positions / preview 全部成功,place 已到達 broker。
+- 首筆模擬單**僅因非交易日被擋**(週日測試 → `OAUTH_OPENAPI_NO_TRADING_DAY`)。下一個美股交易日重跑同一指令即會成交。
+- 賬號 `FQGU74FVLF506T2VKVRNK7M559`(DEM 模擬倉),USD 段購買力 ~$1.13M。
 
 ## 最近決策
-- [[wiki/decisions/2026-06-15-pipeline-orchestrator|端到端 Pipeline Orchestrator]] — parse→fuse→sizing→gate→place 膠水；TA 可插拔（real/stub/skip）、模擬倉 `auto` 確認、reconcile bootstrap。
-- [[wiki/decisions/2026-05-21-auto-trading-completion-phases|階段劃分]] — Phase 0–5 全完成；已補「階段整合」段說明 orchestrator 接線。
+- [[wiki/decisions/2026-06-15-pipeline-orchestrator|端到端 Pipeline Orchestrator]] — parse→fuse→sizing→gate→place 膠水。broker 傳輸已從假設的 `webull-skill` 文本 CLI 改為 **SDK JSON shim**(見下)。
+- [[wiki/decisions/2026-05-21-auto-trading-completion-phases|階段劃分]] — Phase 0–5 全完成 + orchestrator 已接線。
 
 ## 架構脈搏
-- **穩定**：config/safety/parser/sizing/reconcile/executor/shadow 各模組（單測全綠，860 passed）。
-- **演進中**：`src/pipeline/` orchestrator 已上線（`run-direct`/`run`/`status` CLI）；`src/ingestion/`（Substack 偵測）仍未接線、未 commit。
-- **待整合**：`ShadowPipeline.run()` 仍是佔位骨架，後續應委託本 orchestrator，讓 shadow 觀察真正跑模擬單。
+- **穩定**:config/safety/parser/sizing/reconcile/executor 各模組(856 tests passed)。
+- **broker 傳輸**:`scripts/webull_json.py` 持久化 shim,由 `.venv-webull/bin/python`(SDK 需 <3.14)執行,複用 webull-skill 的 `.env`+token,stdin/stdout 行 JSON;SDK 只 init 一次(避開 token 10 req/30s 限流)。`WebullCLIAdapter` 保活該 shim。
+- **待整合**:`src/ingestion/`(Substack 偵測)仍未接線、未 commit;`ShadowPipeline.run()` 仍佔位。
 
 ## 最近坑點
-- **`ExecutionGate.record_attempt()` 不存 `idempotency_key`** → 重複下單檢測默默失效。已修：`ExecutionAttempt` 加欄位（見 [[wiki/architecture/implicit-contracts]]）。
-- **`load_config()` 漏 flatten `portfolio:` 段** → sizing 設定被默默丟棄（靠預設巧合跑通）。已修。
-- **全新帳號 reconcile mismatch → stop-the-world** → orchestrator 首次以 broker 快照 bootstrap baseline。
-- `webull-skill` 須在 PATH 且已登入；帳號經 `WEBULL_UAT_ACCOUNT_ID` 解析。
+- **webull-skill CLI 成功時只輸出文本、無 JSON 模式** → 無法程式解析;故改走 SDK shim(見 [[wiki/architecture/implicit-contracts]])。
+- **每呼叫一次就重 init SDK → 觸發 token 限流(429)** → 改持久化 shim,全鏈一次 token check。
+- **`OAUTH_*` 錯誤碼不是 auth 錯誤**(如 `NO_TRADING_DAY`)→ `_looks_like_auth` 收窄,別誤判。
+- 模擬倉 equity 很大($8.8M),1% 即超 `max_notional_usd=$10k` → 用小 pct(如 0.1)才不會被 MODIFY_SIZE 擋。
 
 ## 最近交付
-- `f9d0050` feat(pipeline): end-to-end orchestrator for paper/UAT order placement
+- `f25a7d9` feat(executor): Webull HK OpenAPI integration via persistent SDK shim
+- `7c69b3a` docs(wiki): document end-to-end pipeline orchestrator
 - `9de40a2` fix(executor): persist idempotency_key on ExecutionAttempt so dedup works
+- `f9d0050` feat(pipeline): end-to-end orchestrator for paper/UAT order placement
