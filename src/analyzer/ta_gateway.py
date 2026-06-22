@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+from pathlib import Path
 
 from src.analyzer.ta_models import TAResult
 
@@ -26,6 +28,26 @@ class TradingAgentsGateway:
         self._script = runner_script
         self._timeout = timeout_seconds
         self._depth = depth
+        # run_analysis.py needs DEEPSEEK_API_KEY in the env but does not auto-load
+        # the TradingAgents .env (different CWD); inject it from <ta_root>/.env.
+        self._env = self._build_subprocess_env(runner_script)
+
+    @staticmethod
+    def _build_subprocess_env(runner_script: str) -> dict:
+        """os.environ + DEEPSEEK_API_KEY loaded from the TradingAgents .env."""
+        env = dict(os.environ)
+        if env.get("DEEPSEEK_API_KEY"):
+            return env
+        env_file = Path(runner_script).resolve().parent.parent / ".env"
+        if env_file.exists():
+            for line in env_file.read_text().splitlines():
+                line = line.strip()
+                if line.startswith("DEEPSEEK_API_KEY="):
+                    env["DEEPSEEK_API_KEY"] = (
+                        line.split("=", 1)[1].strip().strip("\"'")
+                    )
+                    break
+        return env
 
     def analyze(self, ticker: str, trade_date: str) -> TAResult:
         """Run TA analysis for a single ticker.
@@ -45,6 +67,7 @@ class TradingAgentsGateway:
                 capture_output=True,
                 text=True,
                 timeout=self._timeout,
+                env=self._env,
             )
         except subprocess.TimeoutExpired:
             return TAResult(

@@ -25,7 +25,7 @@ from src.analyzer.decision_fusion import (
     FusionDecision,
     fuse,
 )
-from src.analyzer.parser_schema import ParsedInstruction
+from src.analyzer.parser_schema import ParsedInstruction, ParseResult
 from src.analyzer.ta_models import TAResult
 from src.config.settings import RuntimeConfig
 from src.executor.exceptions import DuplicateExecutionError
@@ -141,11 +141,22 @@ class TradingPipeline:
             )
 
         parse_result = self._parser.parse(post_id, raw_text)
+        return self.process_parse_result(parse_result, account_id)
 
+    def process_parse_result(
+        self,
+        parse_result: ParseResult,
+        account_id: str,
+    ) -> list[InstructionOutcome]:
+        """Run a pre-parsed ParseResult through the pipeline (no re-parse).
+
+        Entry point for ingestion, where ``SignalDetector`` has already parsed
+        the post — avoids a second LLM call that ``process_post`` would make.
+        """
         if parse_result.status != "EXECUTABLE":
             return [
                 InstructionOutcome(
-                    instruction_id=post_id,
+                    instruction_id=parse_result.post_id,
                     symbol="",
                     action="",
                     outcome=OUTCOME_SKIPPED,

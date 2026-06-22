@@ -119,6 +119,46 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_poll(args: argparse.Namespace) -> int:
+    """Poll Substack for new Christian posts → parse → TA → sizing → place.
+
+    Uses a seen-state store so a re-poll does not re-process a post.
+    """
+    from src.ingestion.poll import poll_once
+    from src.ingestion.seen_store import ProcessedPostStore
+    from src.ingestion.substack_client import SubstackClient
+
+    config = load_config(args.config)
+    stack = build_pipeline(
+        config,
+        ta_mode=args.ta,
+        account_id=args.account,
+        ledger_dir=args.ledger_dir,
+        require_reconcile=False if args.no_require_reconcile else None,
+        with_parser=True,
+    )
+    if stack.parser is None:
+        raise SystemExit("poll requires a parser")
+
+    seen = ProcessedPostStore(Path(args.ledger_dir) / "processed_posts.json")
+    pub_ids = args.publication_ids.split(",") if args.publication_ids else None
+
+    with SubstackClient() as client:
+        all_outcomes = poll_once(
+            client=client,
+            parser=stack.parser,
+            pipeline=stack.pipeline,
+            seen_store=seen,
+            account_id=stack.account_id,
+            publication_ids=pub_ids,
+            limit=args.limit,
+        )
+
+    _print_outcomes(all_outcomes)
+    print(f"\nProcessed {len(all_outcomes)} instruction outcome(s).")
+    return 0
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -186,6 +226,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--post-id", default=None)
     _add_common(p_run)
     p_run.set_defaults(func=cmd_run)
+
+    p_poll = sub.add_parser("poll", help="Poll Substack → parse → TA → place")
+    p_poll.add_argument(
+        "--publication-ids", default=None,
+        help="Comma-separated Substack publication ids (default: all subscriptions)",
+    )
+    p_poll.add_argument("--limit", type=int, default=10, help="Max posts to fetch")
+    _add_common(p_poll)
+    p_poll.set_defaults(func=cmd_poll)
 
     p_status = sub.add_parser("status", help="Show recent pipeline activity")
     p_status.add_argument("--ledger-dir", default=DEFAULT_LEDGER_DIR)
