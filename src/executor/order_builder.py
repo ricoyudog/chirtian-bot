@@ -43,7 +43,10 @@ class OrderBuilder:
             "symbol": intent.symbol,
             "side": intent.side,
             "order_type": intent.order_type,
-            "limit_price": intent.limit_price,
+            # US equities trade in $0.01 ticks; the slippage-adjusted price
+            # carries full float precision (e.g. 303.11805) which the broker
+            # rejects as ORDER_PRICE_ILLEGAL. Round to 2 decimals.
+            "limit_price": round(intent.limit_price, 2),
             "quantity": intent.quantity,
             "instrument_type": "EQUITY",
             "market": "US",
