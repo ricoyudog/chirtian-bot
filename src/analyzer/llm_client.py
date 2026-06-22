@@ -91,6 +91,29 @@ class LLMClient(Protocol):
 # ClaudeCliClient — wraps `claude` CLI via subprocess
 # ---------------------------------------------------------------------------
 
+
+def _loads_maybe_fenced(text: str) -> dict:
+    """Parse JSON that may be fenced (```json) and/or have trailing prose.
+
+    Models sometimes wrap output in a markdown fence or add commentary after
+    the JSON object. Strip fences, find the first ``{``, and decode just that
+    object (ignoring trailing data).
+    """
+    s = text.strip()
+    if s.startswith("```"):
+        lines = s.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        s = "\n".join(lines).strip()
+    start = s.find("{")
+    if start == -1:
+        return json.loads(s)  # raise JSONDecodeError with a clear message
+    obj, _ = json.JSONDecoder().raw_decode(s[start:])
+    return obj
+
+
 _DEFAULT_BUDGET_USD = 0.05
 
 
@@ -168,6 +191,28 @@ class ClaudeCliClient:
                 f"Invalid JSON from LLM: {exc}",
                 raw_output=result.stdout,
             )
+
+        # claude --output-format json wraps the model output in an envelope:
+        #   {"type":"result","is_error":bool,"result":"<inner JSON string>",...}
+        # Unwrap to the inner payload and surface gateway/budget errors.
+        if isinstance(data, dict) and data.get("type") == "result":
+            if data.get("is_error"):
+                raise LLMOutputError(
+                    f"claude returned is_error (api_error_status="
+                    f"{data.get('api_error_status')})",
+                    raw_output=result.stdout,
+                )
+            inner = data.get("result")
+            if isinstance(inner, str):
+                try:
+                    data = _loads_maybe_fenced(inner)
+                except json.JSONDecodeError as exc:
+                    raise LLMOutputError(
+                        f"claude inner result is not JSON: {exc}",
+                        raw_output=inner,
+                    )
+            elif isinstance(inner, dict):
+                data = inner
 
         # Validate against schema
         try:

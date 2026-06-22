@@ -209,27 +209,39 @@ class TradingPipeline:
         if fused_pct is not None and fused_pct != instruction.quantity_pct:
             instruction = instruction.model_copy(update={"quantity_pct": fused_pct})
 
-        # 4. Account snapshot
-        snapshot = self._provider.get_snapshot(account_id)
+        # 4-7. Snapshot → reconcile → quote → sizing → intent.
+        # Wrapped: a broker/data error for one symbol (e.g. UNSUPPORTED_SYMBOL)
+        # must fail closed for THAT instruction, not crash the whole post — other
+        # instructions still process.
+        try:
+            snapshot = self._provider.get_snapshot(account_id)
 
-        # 5. Reconcile / bootstrap (fail-closed stop-the-world on mismatch)
-        if self._reconcile_or_bootstrap(snapshot, account_id):
+            if self._reconcile_or_bootstrap(snapshot, account_id):
+                return InstructionOutcome(
+                    instruction_id=oid,
+                    symbol=symbol,
+                    action=action,
+                    outcome=OUTCOME_BLOCKED,
+                    reason="RECONCILE_MISMATCH",
+                    fusion_status=decision.fusion_status,
+                    ta_rating=decision.ta_rating,
+                )
+
+            quote = self._provider.get_quote(symbol)
+            sizing = self._sizing.size(instruction, snapshot, quote)
+            intent = build_execution_intent(sizing, self._config)
+        except Exception as exc:
             return InstructionOutcome(
                 instruction_id=oid,
                 symbol=symbol,
                 action=action,
                 outcome=OUTCOME_BLOCKED,
-                reason="RECONCILE_MISMATCH",
+                reason="DATA_OR_SIZING_FAILED",
                 fusion_status=decision.fusion_status,
                 ta_rating=decision.ta_rating,
+                error=str(exc),
             )
 
-        # 6. Sizing
-        quote = self._provider.get_quote(symbol)
-        sizing = self._sizing.size(instruction, snapshot, quote)
-
-        # 7. Build execution intent
-        intent = build_execution_intent(sizing, self._config)
         if intent is None:
             return InstructionOutcome(
                 instruction_id=oid,

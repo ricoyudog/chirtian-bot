@@ -157,7 +157,11 @@ def build_pipeline(
     ta_gateway = _build_ta_gateway(ta_mode)
     parser = (
         InstructionParser(
-            llm_client=ClaudeCliClient(),
+            llm_client=ClaudeCliClient(
+                # Parser prompts are large (reference context + post); the default
+                # 0.05 budget is too low and aborts with error_max_budget_usd.
+                max_budget_usd=float(os.environ.get("CLAUDE_MAX_BUDGET_USD", "0.50")),
+            ),
             audit_ledger=audit_ledger,
         )
         if with_parser

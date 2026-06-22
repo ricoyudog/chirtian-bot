@@ -69,8 +69,30 @@ Use these codes in reason_codes:
 
 
 def _build_prompt(reference_context: str, post_text: str) -> str:
-    """Build the full parser prompt."""
+    """Build the full parser prompt (system rules + reference + post)."""
     return f"""\
+{_SYSTEM_PROMPT}
+
+---
+
+## Output Format
+
+Respond with ONLY a raw JSON object (no markdown fences, no prose) matching:
+- status: one of "EXECUTABLE", "SKIP_NOT_ACTIONABLE", "NEEDS_REVIEW"
+- reason_codes: array of reason-code strings
+- confidence: number 0.0-1.0
+- instructions: array, each with exactly: action (BUY|SELL|SHORT|COVER),
+  symbol (string), quantity_type ("pct"|"all"), quantity_pct (number or null),
+  market ("US"|"HK"), time_modifier, confidence, parse_span
+
+Example for "賣出tsla（-1%）":
+{{"status":"EXECUTABLE","reason_codes":["CLEAR_ACTION"],"confidence":0.95,
+ "instructions":[{{"action":"SELL","symbol":"TSLA","quantity_type":"pct",
+  "quantity_pct":1.0,"market":"US","time_modifier":"immediate","confidence":0.95,
+  "parse_span":"賣出tsla（-1%）"}}]}}
+
+---
+
 ## Reference Material
 
 {reference_context}
@@ -83,8 +105,7 @@ def _build_prompt(reference_context: str, post_text: str) -> str:
 
 ---
 
-Analyze the above post and output JSON with status, reason_codes, confidence, \
-and instructions arrays."""
+Analyze the above post and output the JSON object."""
 
 
 # ---------------------------------------------------------------------------
@@ -143,7 +164,7 @@ class InstructionParser:
             llm_response = self._llm.complete_json(
                 prompt=prompt,
                 schema=LLM_OUTPUT_SCHEMA,
-                timeout_seconds=60,
+                timeout_seconds=180,
             )
         except LLMError as exc:
             error_reason = f"{type(exc).__name__}: {exc}"
