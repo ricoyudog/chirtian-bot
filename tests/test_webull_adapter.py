@@ -1,24 +1,22 @@
-"""Tests for WebullCLIAdapter — subprocess mock-based."""
+"""Tests for WebullCLIAdapter — persistent shim (stdin/stdout JSON) transport.
+
+The adapter keeps ``scripts/webull_json.py`` alive as a subprocess and exchanges
+newline-delimited JSON with it. These tests mock the subprocess + selector so
+no real broker/SDK is required. (Live behaviour is covered by the sandbox run
+and ``tests/smoke``.)
+"""
 
 from __future__ import annotations
 
 import json
+import selectors
 import subprocess
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from src.executor.exceptions import BrokerAuthError, BrokerError, BrokerTimeoutError
 from src.executor.webull_adapter import WebullCLIAdapter
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-SUCCESS_RESPONSE = {"ok": True, "detail": "success", "payload": {"result": "ok"}}
-ERROR_RESPONSE = {"ok": False, "detail": "order rejected", "payload": {}}
-AUTH_ERROR_RESPONSE = {"ok": False, "detail": "unauthorized: invalid token", "payload": {}}
 
 ORDER_JSON = {
     "symbol": "AAPL",
@@ -35,292 +33,29 @@ ORDER_JSON = {
 }
 
 
-def _mock_run(stdout: str = "", stderr: str = "", returncode: int = 0):
-    """Create a mock subprocess.run that returns the given output."""
-    mock = MagicMock(spec=subprocess.CompletedProcess)
-    mock.stdout = stdout
-    mock.stderr = stderr
-    mock.returncode = returncode
-    return mock
-
-
-# ---------------------------------------------------------------------------
-# Subprocess runner
-# ---------------------------------------------------------------------------
-
-
-class TestRunCli:
-    @patch("subprocess.run")
-    def test_successful_json_response(self, mock_run):
-        mock_run.return_value = _mock_run(stdout=json.dumps(SUCCESS_RESPONSE))
-
-        adapter = WebullCLIAdapter()
-        result = adapter._run_cli(["trading", "--action", "account-list"])
-
-        assert result == {"result": "ok"}
-        mock_run.assert_called_once()
-
-    @patch("subprocess.run")
-    def test_timeout_raises_broker_timeout_error(self, mock_run):
-        mock_run.side_effect = subprocess.TimeoutExpired(cmd="webull-skill", timeout=30)
-
-        adapter = WebullCLIAdapter(timeout=30)
-        with pytest.raises(BrokerTimeoutError, match="timed out"):
-            adapter._run_cli(["trading", "--action", "account-list"])
-
-    @patch("subprocess.run")
-    def test_empty_stdout_raises_broker_error(self, mock_run):
-        mock_run.return_value = _mock_run(stdout="", stderr="some error")
-
-        adapter = WebullCLIAdapter()
-        with pytest.raises(BrokerError, match="empty output"):
-            adapter._run_cli(["trading", "--action", "account-list"])
-
-    @patch("subprocess.run")
-    def test_empty_stdout_with_auth_in_stderr(self, mock_run):
-        mock_run.return_value = _mock_run(stdout="", stderr="Auth failure: unauthorized")
-
-        adapter = WebullCLIAdapter()
-        with pytest.raises(BrokerAuthError):
-            adapter._run_cli(["trading", "--action", "account-list"])
-
-    @patch("subprocess.run")
-    def test_non_json_output_raises_broker_error(self, mock_run):
-        mock_run.return_value = _mock_run(stdout="not json at all")
-
-        adapter = WebullCLIAdapter()
-        with pytest.raises(BrokerError, match="non-JSON"):
-            adapter._run_cli(["trading", "--action", "account-list"])
-
-    @patch("subprocess.run")
-    def test_ok_false_raises_broker_error(self, mock_run):
-        mock_run.return_value = _mock_run(stdout=json.dumps(ERROR_RESPONSE))
-
-        adapter = WebullCLIAdapter()
-        with pytest.raises(BrokerError, match="order rejected"):
-            adapter._run_cli(["trading", "--action", "account-list"])
-
-    @patch("subprocess.run")
-    def test_auth_error_in_detail(self, mock_run):
-        mock_run.return_value = _mock_run(stdout=json.dumps(AUTH_ERROR_RESPONSE))
-
-        adapter = WebullCLIAdapter()
-        with pytest.raises(BrokerAuthError):
-            adapter._run_cli(["trading", "--action", "account-list"])
-
-    @patch("subprocess.run")
-    def test_unexpected_format_raises_broker_error(self, mock_run):
-        mock_run.return_value = _mock_run(stdout=json.dumps({"no_ok_field": True}))
-
-        adapter = WebullCLIAdapter()
-        with pytest.raises(BrokerError, match="Unexpected"):
-            adapter._run_cli(["trading", "--action", "account-list"])
-
-
-# ---------------------------------------------------------------------------
-# Order operations
-# ---------------------------------------------------------------------------
-
-
-class TestPreviewOrder:
-    @patch("subprocess.run")
-    def test_preview_uses_temp_file(self, mock_run):
-        preview_payload = {"estimated_cost": 1800.0}
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "preview", "payload": preview_payload,
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.preview_order("ACC001", ORDER_JSON)
-
-        assert result == preview_payload
-        # Verify the command uses preview action
-        call_args = mock_run.call_args
-        cmd = call_args[0][0]  # First positional arg is the command list
-        assert "trading" in cmd
-        assert "--action" in cmd
-        idx_action = cmd.index("--action")
-        assert cmd[idx_action + 1] == "preview"
-        assert "--account-id" in cmd
-        idx_account = cmd.index("--account-id")
-        assert cmd[idx_account + 1] == "ACC001"
-        assert "--order-file" in cmd
-
-
-class TestPlaceOrder:
-    @patch("subprocess.run")
-    def test_place_returns_payload(self, mock_run):
-        place_payload = {"order_id": "ORD12345", "status": "pending"}
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "placed", "payload": place_payload,
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.place_order("ACC001", ORDER_JSON)
-
-        assert result["order_id"] == "ORD12345"
-        # Verify uses place action
-        cmd = mock_run.call_args[0][0]
-        idx_action = cmd.index("--action")
-        assert cmd[idx_action + 1] == "place"
-
-    @patch("subprocess.run")
-    def test_temp_file_cleaned_up_on_success(self, mock_run):
-        mock_run.return_value = _mock_run(stdout=json.dumps(SUCCESS_RESPONSE))
-
-        adapter = WebullCLIAdapter()
-        adapter.place_order("ACC001", ORDER_JSON)
-
-        # The temp file should be deleted — verified by the finally block
-        # We just check the call succeeded without error
-
-    @patch("subprocess.run")
-    def test_temp_file_cleaned_up_on_error(self, mock_run):
-        mock_run.side_effect = BrokerError("fail")
-
-        adapter = WebullCLIAdapter()
-        with pytest.raises(BrokerError):
-            adapter.place_order("ACC001", ORDER_JSON)
-
-
-# ---------------------------------------------------------------------------
-# Order management
-# ---------------------------------------------------------------------------
-
-
-class TestGetOrderStatus:
-    @patch("subprocess.run")
-    def test_get_order_status(self, mock_run):
-        status_payload = {"order_id": "ORD123", "status": "filled", "filled_qty": 10}
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "ok", "payload": status_payload,
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.get_order_status("ACC001", "ORD123")
-
-        assert result["status"] == "filled"
-        cmd = mock_run.call_args[0][0]
-        assert "--order-id" in cmd
-        idx = cmd.index("--order-id")
-        assert cmd[idx + 1] == "ORD123"
-
-
-class TestCancelOrder:
-    @patch("subprocess.run")
-    def test_cancel_order(self, mock_run):
-        cancel_payload = {"order_id": "ORD123", "status": "cancelled"}
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "cancelled", "payload": cancel_payload,
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.cancel_order("ACC001", "ORD123")
-
-        assert result["status"] == "cancelled"
-        cmd = mock_run.call_args[0][0]
-        idx = cmd.index("--action")
-        assert cmd[idx + 1] == "cancel"
-
-
-# ---------------------------------------------------------------------------
-# Account data
-# ---------------------------------------------------------------------------
-
-
-class TestGetAccountList:
-    @patch("subprocess.run")
-    def test_returns_list_payload(self, mock_run):
-        accounts = [{"account_id": "ACC1"}, {"account_id": "ACC2"}]
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "ok", "payload": accounts,
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.get_account_list()
-
-        assert result == accounts
-
-    @patch("subprocess.run")
-    def test_wraps_dict_payload(self, mock_run):
-        """If payload is a single dict, wrap it in a list."""
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "ok", "payload": {"account_id": "ACC1"},
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.get_account_list()
-
-        assert len(result) == 1
-        assert result[0]["account_id"] == "ACC1"
-
-
-class TestGetBalance:
-    @patch("subprocess.run")
-    def test_returns_balance_dict(self, mock_run):
-        balance = {"equity": 50000.0, "buying_power": 10000.0}
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "ok", "payload": balance,
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.get_balance("ACC001")
-
-        assert result["equity"] == 50000.0
-
-
-class TestGetPositions:
-    @patch("subprocess.run")
-    def test_returns_positions_list(self, mock_run):
-        positions = [{"symbol": "AAPL", "quantity": 10}]
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "ok", "payload": positions,
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.get_positions("ACC001")
-
-        assert len(result) == 1
-        assert result[0]["symbol"] == "AAPL"
-
-    @patch("subprocess.run")
-    def test_extracts_positions_from_dict(self, mock_run):
-        """If payload wraps positions in a dict, extract the list."""
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "ok",
-            "payload": {"positions": [{"symbol": "AAPL", "quantity": 10}]},
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.get_positions("ACC001")
-
-        assert len(result) == 1
-
-
-class TestGetOpenOrders:
-    @patch("subprocess.run")
-    def test_returns_orders_list(self, mock_run):
-        orders = [{"order_id": "ORD1", "symbol": "AAPL", "status": "pending"}]
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "ok", "payload": orders,
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.get_open_orders("ACC001")
-
-        assert len(result) == 1
-        assert result[0]["order_id"] == "ORD1"
-
-    @patch("subprocess.run")
-    def test_empty_orders(self, mock_run):
-        mock_run.return_value = _mock_run(stdout=json.dumps({
-            "ok": True, "detail": "ok", "payload": [],
-        }))
-
-        adapter = WebullCLIAdapter()
-        result = adapter.get_open_orders("ACC001")
-
-        assert result == []
+def _ok(payload):
+    return json.dumps({"ok": True, "payload": payload, "detail": ""})
+
+
+def _fail(detail):
+    return json.dumps({"ok": False, "payload": None, "detail": detail})
+
+
+def _wire(monkeypatch, response_line: str, *, ready: bool = True):
+    """Patch Popen + DefaultSelector to feed one response line."""
+    proc = MagicMock()
+    proc.poll.return_value = None
+    proc.stdin = MagicMock()
+    proc.stdout = MagicMock()
+    proc.stdout.readline = MagicMock(side_effect=[response_line])
+    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: proc)
+
+    sel = MagicMock()
+    sel.register = MagicMock()
+    sel.unregister = MagicMock()
+    sel.select.return_value = [(proc.stdout, selectors.EVENT_READ)] if ready else []
+    monkeypatch.setattr(selectors, "DefaultSelector", lambda: sel)
+    return proc
 
 
 # ---------------------------------------------------------------------------
@@ -329,12 +64,141 @@ class TestGetOpenOrders:
 
 
 class TestConstructor:
-    def test_default_values(self):
-        adapter = WebullCLIAdapter()
-        assert adapter._cli == "webull-skill"
-        assert adapter._timeout == 30
+    def test_defaults(self):
+        a = WebullCLIAdapter()
+        assert a._python.endswith("python")
+        assert a._shim.endswith("webull_json.py")
 
-    def test_custom_values(self):
-        adapter = WebullCLIAdapter(cli_path="/usr/local/bin/webull-skill", timeout=60)
-        assert adapter._cli == "/usr/local/bin/webull-skill"
-        assert adapter._timeout == 60
+    def test_env_override(self, monkeypatch):
+        monkeypatch.setenv("WEBULL_PYTHON", "/custom/python")
+        monkeypatch.setenv("WEBULL_SHIM_SCRIPT", "/custom/shim.py")
+        a = WebullCLIAdapter()
+        assert a._python == "/custom/python"
+        assert a._shim == "/custom/shim.py"
+
+
+# ---------------------------------------------------------------------------
+# _call transport
+# ---------------------------------------------------------------------------
+
+
+class TestCall:
+    def test_returns_payload(self, monkeypatch):
+        proc = _wire(monkeypatch, _ok({"equity": 50000.0}))
+        adapter = WebullCLIAdapter()
+
+        result = adapter.get_balance("ACC001")
+
+        assert result == {"equity": 50000.0}
+        # request is a JSON line on stdin
+        written = proc.stdin.write.call_args[0][0]
+        assert json.loads(written) == {"action": "balance", "account_id": "ACC001"}
+
+    def test_ok_false_raises_broker_error(self, monkeypatch):
+        _wire(monkeypatch, _fail("order rejected: insufficient buying power"))
+        adapter = WebullCLIAdapter()
+
+        with pytest.raises(BrokerError, match="order rejected"):
+            adapter.get_balance("ACC001")
+
+    def test_auth_detail_raises_broker_auth(self, monkeypatch):
+        _wire(monkeypatch, _fail("ERROR_CHECK_TOKEN: unauthorized"))
+        adapter = WebullCLIAdapter()
+
+        with pytest.raises(BrokerAuthError):
+            adapter.get_balance("ACC001")
+
+    def test_oauth_error_code_is_not_auth(self, monkeypatch):
+        # Regression: "OAuth_" error codes must NOT be classified as auth.
+        _wire(monkeypatch, _fail("OAUTH_OPENAPI_NO_TRADING_DAY: Non-trading day."))
+        adapter = WebullCLIAdapter()
+
+        with pytest.raises(BrokerError):
+            try:
+                adapter.get_balance("ACC001")
+            except BrokerAuthError:
+                pytest.fail("OAUTH_ business error misclassified as BrokerAuthError")
+
+    def test_empty_line_raises_broker_error(self, monkeypatch):
+        proc = MagicMock()
+        proc.poll.return_value = None
+        proc.stdin = MagicMock()
+        proc.stdout.readline = MagicMock(return_value="")  # shim exited
+        monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: proc)
+        sel = MagicMock()
+        sel.select.return_value = [(proc.stdout, selectors.EVENT_READ)]
+        monkeypatch.setattr(selectors, "DefaultSelector", lambda: sel)
+
+        adapter = WebullCLIAdapter()
+        with pytest.raises(BrokerError, match="exited unexpectedly"):
+            adapter.get_balance("ACC001")
+
+    def test_timeout_raises_broker_timeout(self, monkeypatch):
+        _wire(monkeypatch, "", ready=False)  # selector never fires
+        adapter = WebullCLIAdapter(timeout=1)
+
+        with pytest.raises(BrokerTimeoutError):
+            adapter.get_balance("ACC001")
+
+    def test_missing_interpreter_raises_broker_error(self, monkeypatch):
+        monkeypatch.setattr(
+            subprocess, "Popen", MagicMock(side_effect=FileNotFoundError("no python"))
+        )
+        adapter = WebullCLIAdapter()
+        with pytest.raises(BrokerError, match="not found"):
+            adapter.get_balance("ACC001")
+
+
+# ---------------------------------------------------------------------------
+# Public methods build the right request dicts
+# ---------------------------------------------------------------------------
+
+
+class TestRequestShapes:
+    @pytest.mark.parametrize(
+        "method, args, expected",
+        [
+            ("get_account_list", (), {"action": "account_list"}),
+            ("get_balance", ("ACC1",), {"action": "balance", "account_id": "ACC1"}),
+            ("get_positions", ("ACC1",), {"action": "positions", "account_id": "ACC1"}),
+            ("get_open_orders", ("ACC1",), {"action": "open_orders", "account_id": "ACC1"}),
+            ("get_stock_snapshot", ("AAPL",), {"action": "quote", "symbol": "AAPL"}),
+        ],
+    )
+    def test_account_data(self, monkeypatch, method, args, expected):
+        proc = _wire(monkeypatch, _ok({}) if method != "get_account_list" else _ok([]))
+        adapter = WebullCLIAdapter()
+        getattr(adapter, method)(*args)
+        assert json.loads(proc.stdin.write.call_args[0][0]) == expected
+
+    def test_preview_order(self, monkeypatch):
+        proc = _wire(monkeypatch, _ok({"estimated_cost": "100.00"}))
+        adapter = WebullCLIAdapter()
+        adapter.preview_order("ACC1", ORDER_JSON)
+        req = json.loads(proc.stdin.write.call_args[0][0])
+        assert req["action"] == "preview"
+        assert req["account_id"] == "ACC1"
+        assert req["order"] == ORDER_JSON
+
+    def test_place_order(self, monkeypatch):
+        proc = _wire(monkeypatch, _ok({"order_id": "ORD1"}))
+        adapter = WebullCLIAdapter()
+        result = adapter.place_order("ACC1", ORDER_JSON)
+        req = json.loads(proc.stdin.write.call_args[0][0])
+        assert req["action"] == "place"
+        assert req["order"] == ORDER_JSON
+        assert result == {"order_id": "ORD1"}
+
+    def test_get_order_status(self, monkeypatch):
+        proc = _wire(monkeypatch, _ok({"status": "filled"}))
+        adapter = WebullCLIAdapter()
+        adapter.get_order_status("ACC1", "ORD1")
+        req = json.loads(proc.stdin.write.call_args[0][0])
+        assert req == {"action": "order_detail", "account_id": "ACC1", "order_id": "ORD1"}
+
+    def test_cancel_order(self, monkeypatch):
+        proc = _wire(monkeypatch, _ok({"cancelled": "ORD1"}))
+        adapter = WebullCLIAdapter()
+        adapter.cancel_order("ACC1", "ORD1")
+        req = json.loads(proc.stdin.write.call_args[0][0])
+        assert req == {"action": "cancel", "account_id": "ACC1", "order_id": "ORD1"}

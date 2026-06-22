@@ -303,3 +303,31 @@ class TestScopeGuards:
         assert outcome.outcome == OUTCOME_NEEDS_REVIEW
         assert outcome.reason == "SYMBOL_NOT_WHITELISTED"
         assert broker.place_order.call_count == 0
+
+
+# ---------------------------------------------------------------------------
+# Place failure (e.g. broker rejects: non-trading day, insufficient funds)
+# ---------------------------------------------------------------------------
+
+
+class TestPlaceFailure:
+    def test_broker_reject_returns_blocked(self, tmp_path):
+        from src.executor.exceptions import BrokerError
+
+        pipeline, broker, _, _ = _build_pipeline(tmp_path)
+        # Preview succeeds, place is rejected by the broker.
+        broker.place_order.side_effect = BrokerError(
+            "OAUTH_OPENAPI_NO_TRADING_DAY: Non-trading day."
+        )
+
+        outcome = pipeline.process_instruction(
+            make_direct_instruction("AAPL", "BUY", 1.0),
+            "TEST001",
+        )
+
+        assert outcome.outcome == OUTCOME_BLOCKED
+        assert outcome.reason == "PLACE_FAILED"
+        assert outcome.sizing_status == "EXECUTABLE"
+        assert outcome.order_quantity >= 1  # sizing produced a real qty
+        assert "Non-trading day" in outcome.error
+

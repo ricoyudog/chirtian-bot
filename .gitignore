@@ -3,6 +3,14 @@ node_modules/
 __pycache__/
 *.pyc
 
+# Virtualenvs
+.venv/
+.venv-webull/
+
+# Webull skill artifacts (extracted source + auth tokens)
+webull-openapi-skills-main/
+conf/
+
 # IDE / Editor
 .obsidian/
 .vscode/
@@ -23,6 +31,8 @@ Thumbs.db
 # Secrets
 .env
 .env.*
+# Plaintext Webull sandbox credentials — must NOT be committed.
+wiki/webull-api/模擬倉 key.md
 
 # Runtime (shadow observation state, summaries, incidents)
 runtime/

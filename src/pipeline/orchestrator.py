@@ -284,7 +284,23 @@ class TradingPipeline:
             intent = confirmed
 
         # 11. Place order
-        place_result = self._broker.place_order(account_id, order_json)
+        try:
+            place_result = self._broker.place_order(account_id, order_json)
+        except Exception as exc:
+            return InstructionOutcome(
+                instruction_id=oid,
+                symbol=symbol,
+                action=action,
+                outcome=OUTCOME_BLOCKED,
+                reason="PLACE_FAILED",
+                fusion_status=decision.fusion_status,
+                ta_rating=decision.ta_rating,
+                sizing_status=sizing.sizing_status,
+                order_quantity=intent.quantity,
+                limit_price=intent.limit_price,
+                preview=preview,
+                error=str(exc),
+            )
         broker_order_id = None
         if isinstance(place_result, dict):
             broker_order_id = place_result.get("order_id") or place_result.get("broker_order_id")
