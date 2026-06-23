@@ -107,6 +107,23 @@ python -m src.pipeline status
 
 ---
 
+## 1.7 Substack Ingestion（`poll`：自動拉最新帖 → 下單）
+
+`python -m src.pipeline poll --ta real|stub [--publication-ids <ids>] [--limit N]`
+
+- 流程：`SubstackClient`(mcp-substack JSON-RPC)→ `SignalDetector.check_new_signals`(fetch + 真實 parser)→ 未見過的帖 → `process_parse_result` → 下單；已處理的帖記到 `runtime/processed_posts.json`(seen-state)不重跑。
+- `post_id` 用帖的 slug（同 `christian log/` 歸檔鍵）。
+- 與 `run --post-file` 差別：`poll` 自動從 Substack 拉最新帖；`run` 用本地檔。
+
+### Substack 登入（付費 session,operator 一次性）
+`poll` 需要有效的 paid Substack session（`~/.config/mcp-substack/storage-state.json`）。過期時：
+1. `python -m` 不可用 → 用 mcp-substack MCP 工具 `substack_login_begin`（開瀏覽器）→ 在瀏覽器登入 → `substack_login_save`。
+2. Substack 採 **magic-link**（非驗證碼、無 captcha）：輸入郵箱 → 收信 → 點 sign-in 連結。session 存回 `storage-state.json`。
+3. 驗證：`substack_auth_status {refresh:true}` → `authenticated: true`。
+- 無瀏覽器時可用 Playwright(`mcp-substack/node_modules/playwright`)驅動 Chrome：開 sign-in 頁、填郵箱、等 operator 提供 magic-link URL、導航過去、`context.storageState()` 存檔。
+
+---
+
 ## 2. Startup Checklist
 
 Before daemon starts:
