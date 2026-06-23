@@ -1,7 +1,7 @@
 ---
 type: wiki
 created: 2026-05-20
-updated: 2026-06-15
+updated: 2026-06-23
 tags: [operations, runbook, trading, auto-trading]
 status: draft
 ---
@@ -116,11 +116,42 @@ python -m src.pipeline status
 - 與 `run --post-file` 差別：`poll` 自動從 Substack 拉最新帖；`run` 用本地檔。
 
 ### Substack 登入（付費 session,operator 一次性）
-`poll` 需要有效的 paid Substack session（`~/.config/mcp-substack/storage-state.json`）。過期時：
-1. `python -m` 不可用 → 用 mcp-substack MCP 工具 `substack_login_begin`（開瀏覽器）→ 在瀏覽器登入 → `substack_login_save`。
-2. Substack 採 **magic-link**（非驗證碼、無 captcha）：輸入郵箱 → 收信 → 點 sign-in 連結。session 存回 `storage-state.json`。
-3. 驗證：`substack_auth_status {refresh:true}` → `authenticated: true`。
-- 無瀏覽器時可用 Playwright(`mcp-substack/node_modules/playwright`)驅動 Chrome：開 sign-in 頁、填郵箱、等 operator 提供 magic-link URL、導航過去、`context.storageState()` 存檔。
+`poll` 需要有效的 paid Substack session（`~/.config/mcp-substack/storage-state.json`）。
+
+> **必讀：probe endpoint patch。** mcp-substack 原本用 `/api/v1/subscriptions/page` 驗證 session,但 Substack 已移除該 endpoint（永遠 404）→ 有效 session 也被誤判未登入、`poll` 認證閘門擋死。已 patch `mcp-substack/lib/substack/client.mjs` 的 `AUTHENTICATED_PROBE_URL` → `/api/v1/subscriptions?tvOnly=false`（200=已登入 / 401=未登入）。christian-bot `SubstackClient`（`src/ingestion/substack_client.py`）每次 spawn 全新 mcp-substack 子程序讀 source,所以**改 source 即生效**；只有 Claude Code 自己那個 MCP server process 要重連才載入 patch。
+
+#### 方法 A（推薦）：從 operator 真 Chrome 抽取 session
+不重新登入,直接用 operator 已登入的 Chrome session。腳本：`scripts/substack-extract-copied-profile.mjs`。
+
+1. operator 在平常 Chrome 登入 Substack（確認 `Default` profile 有 substack cookie: `sqlite3 .../Default/Cookies "select count(*) from cookies where host_key like '%substack%'"` > 0）。
+2. **完全關掉 Chrome**（Cmd+Q）—— 同一 profile 不能兩個 process 同時開。
+3. `node scripts/substack-extract-copied-profile.mjs` —— 複製 `Default`(+`Local State`)到 `/tmp`、用 Playwright 開複本、probe authenticated → 寫 `storage-state.json`。
+4. 若跳 macOS 鑰匙圈授權框 → 按「永遠允許 / Always Allow」。
+
+為什麼要複製 + 真鑰匙圈：
+- **Chrome 拒絕在預設 user-data-dir 開遠端除錯**（"DevTools remote debugging requires a non-default data directory"）→ Playwright 無法直接驅動真 profile,得複製到別處（非預設目錄才允許）。
+- **Chrome v148 cookie 用 macOS Keychain 加密**（"Chrome Safe Storage"）→ Playwright 預設強加 `--use-mock-keychain`（假鑰匙圈）解不開真 cookie。腳本用 `ignoreDefaultArgs: ["--use-mock-keychain","--password-store=basic"]` 改用真 Keychain,cookie 在 Chrome 內部解密、`context.storageState()` 拿明文。
+
+#### 方法 B：magic-link 重新登入（備援）
+1. mcp-substack MCP 工具 `substack_login_begin`（開空白 Chromium）→ 瀏覽器登入 → `substack_login_save`；或 `scripts/substack-login-chrome.mjs`（開真 Chrome、空白 profile）。
+2. Substack 採 **magic-link**（非驗證碼、無 captcha）：輸郵箱 → 收信 → 點 sign-in 連結。session 存回 `storage-state.json`。
+
+#### 驗證 session（獨立於 Claude Code MCP server）
+```bash
+# 1) standalone probe（讀 patched source,直接 probe storage-state.json）——最快確認
+node --input-type=module -e '
+import {probeSavedSession} from "/Users/chunsingyu/softwares/mcp-substack/lib/substack/client.mjs";
+import {readFileSync} from "node:fs";
+const s=JSON.parse(readFileSync("/Users/chunsingyu/.config/mcp-substack/storage-state.json","utf8"));
+const h=s.cookies.map(c=>c.name+"="+c.value).join("; ");
+console.log(await probeSavedSession({fetchImpl:fetch,cookieHeader:h}));'
+# 預期：{"authenticated":true,"reason":"status-200"}
+
+# 2) 真實整合（走 poll 的認證路徑,只列帖不下單）：
+.venv/bin/python -c "import sys;sys.path.insert(0,'src');from ingestion.substack_client import SubstackClient
+with SubstackClient() as c: print('auth OK, updates:', len(c.check_updates(limit=3)))"
+```
+注意：`substack_auth_status {refresh:true}` 這個 MCP 工具用的是 Claude Code 自己的 MCP server process,改 source 後**要重連 MCP** 才會載入 patch（重連前仍會誤報 false）；但 `poll` 用的是新 spawn 的子程序,不受影響。
 
 ---
 
