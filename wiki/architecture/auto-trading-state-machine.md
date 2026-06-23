@@ -1,12 +1,14 @@
 ---
 type: wiki
 created: 2026-05-20
-updated: 2026-05-20
+updated: 2026-06-23
 tags: [architecture, trading, state-machine, idempotency, auto-trading]
 status: draft
 ---
 
 # Auto Trading State Machine
+
+> **實作（2026-06）**：durable queue=`src/state/queue.py`、audit=`src/state/ledger.py`、idempotency=`src/safety/idempotency.py` + `ExecutionGate.check_idempotency`（attempt 須帶 `idempotency_key`，見 [[wiki/architecture/implicit-contracts]]）。本頁為概念設計；實際狀態轉移見 [[wiki/decisions/2026-06-15-pipeline-orchestrator]]。
 
 > 從 [[wiki/architecture/auto-trading-pipeline-High-level|auto-trading-pipeline]] 拆出的 workflow/state/idempotency 設計。目標：可恢復、可重放、不可重複下單。
 

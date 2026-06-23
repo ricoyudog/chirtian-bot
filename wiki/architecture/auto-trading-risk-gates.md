@@ -1,12 +1,14 @@
 ---
 type: wiki
 created: 2026-05-20
-updated: 2026-05-20
+updated: 2026-06-23
 tags: [architecture, trading, risk, gates, auto-trading]
 status: draft
 ---
 
 # Auto Trading Risk Gates
+
+> **實作（2026-06）**：TA double-confirm=`src/analyzer/decision_fusion.py`（fail-closed：TA unavailable → NEEDS_REVIEW）；環境/mutation gate=`src/safety/runtime_guard.py`；sizing 風控=`src/portfolio/sizing.py`；reconcile stop-the-world=`src/portfolio/reconcile.py`。paper 用 `mode:uat_confirm + confirmation_mode:auto`（guard 只硬擋 prod+auto）。見 [[wiki/architecture/implicit-contracts]]。
 
 > 從 [[wiki/architecture/auto-trading-pipeline-High-level|auto-trading-pipeline]] 拆出的風控與上線 gate。核心目標不是證明 Christian 策略本身，而是：收到 Christian 指示後，當天能在安全條件下下單；TradingAgents 作為 double confirmation，綠燈才 go。
 

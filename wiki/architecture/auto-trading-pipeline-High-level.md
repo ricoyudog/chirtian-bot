@@ -1,7 +1,7 @@
 ---
 type: wiki
 created: 2026-05-18
-updated: 2026-05-20
+updated: 2026-06-23
 tags: [architecture, trading, pipeline, mcp, substack, webull]
 status: active
 ---
@@ -12,7 +12,42 @@ status: active
 
 ## 一句話
 
-30 秒輪詢 Christian 的 Substack，解析交易指令，AI 風控評估後，自動透過 Webull MCP 下單（預設沙盒）。
+偵測 Christian 的 Substack 新帖 → LLM 解析交易指令 → TradingAgents 双重确认 → 风控/sizing → Webull HK 模拟仓下单。
+
+---
+
+## 實作現況（2026-06，權威；下方設計細節為歷史背景）
+
+**全鏈路已實作並實測上線**（Webull HK paper）：真實 parser（claude/glm-5.2）+ 真實 TradingAgents（DeepSeek）+ 真實 broker，**已下一筆真實模擬單**（broker order_id `037NFMNA3C80O0K8CAG8000000`）。下方「Module 設計」的許多組件名/傳輸是早期設計，以本節對應的實際代碼為準。
+
+### 設計 → 實際代碼對應
+
+| 設計模組 | 實際實作 | 備註 |
+|---|---|---|
+| Module 1 Poller（30s daemon） | `src/ingestion/`（`SubstackClient`、`SignalDetector`、`poll_once`、`ProcessedPostStore`）+ CLI `poll` | **非 30s 常駐 daemon**，而是 on-demand `python -m src.pipeline poll`；seen-state 在 `runtime/processed_posts.json` |
+| Module 2a Parser | `src/analyzer/parser.py`（`InstructionParser` + `ClaudeCliClient`） | 走 **claude CLI**（glm-5.2 via gateway），非 Anthropic API；`_build_prompt` 帶 `_SYSTEM_PROMPT`+schema 範例；reference = `wiki/research/christian-trading-language.md` |
+| Module 2b TradingAgents | `src/analyzer/ta_gateway.py`（`TradingAgentsGateway` subprocess → `TradingAgents/scripts/run_analysis.py`） | `ta_gateway` 注入 `DEEPSEEK_API_KEY`；輸出 rating 與 `fuse()` 契約一致 |
+| 決策融合 | `src/analyzer/decision_fusion.py`（`fuse()`） | APPROVE/MODIFY/REJECT/NEEDS_REVIEW；TA unavailable → fail-closed NEEDS_REVIEW |
+| Portfolio/Sizing | `src/portfolio/`（`sizing.py`、`buying_power.py`、`reconcile.py`、`ledger.py`、`provider.py`） | `WebullAccountProvider` 經 shim 取 balance/positions/quote |
+| Module 3 Executor | `src/executor/`（`WebullCLIAdapter` + `order_builder.py` + `execution_gate.py`） | **非 webull-skill MCP**；`WebullCLIAdapter` 保活 `scripts/webull_json.py` SDK shim；`OrderBuilder` limit price 取 $0.01 tick |
+| Orchestrator（膠水） | `src/pipeline/`（`orchestrator.py`、`wiring.py`、`__main__.py`） | `TradingPipeline.process_instruction/process_post/process_parse_result`；CLI `run-direct`/`run`/`poll`/`status` |
+| Config | `config.yaml`（`runtime`/`risk`/`portfolio` 三段） + `src/config/` | 實際形狀與下方「Config & State」設計不同；`load_config` 攤平三段 |
+| State/Ledger | `src/state/`（AuditLedger）、`runtime/`（audit_ledger.jsonl、portfolio_ledger.jsonl、processed_posts.json） | 非 `state.json`/`portfolio/` 目錄 |
+
+### 入口（非 daemon）
+```bash
+python -m src.pipeline run-direct --symbol AAPL --action BUY --pct 0.1 --ta real   # 注入指令
+python -m src.pipeline run --post-file <post.md> --ta real                          # 真實 parser
+python -m src.pipeline poll --ta real                                               # Substack → … → broker
+python -m src.pipeline status
+```
+
+### 已知環境約束（非代碼）
+- Webull HK paper 帳號支援 AAPL，**不支援 TSLA**（UNSUPPORTED_SYMBOL）；白名單要對齊帳號實際標的。
+- `poll` 需有效 paid Substack session（magic-link 登入；見 runbook §1.7）。
+- 真實 parser 需 claude gateway 可用 + 預算 $0.50（`CLAUDE_MAX_BUDGET_USD`）；真實 TA 需 `DEEPSEEK_API_KEY`。
+
+詳見 [[wiki/decisions/2026-06-15-pipeline-orchestrator]]、[[wiki/operations/auto-trading-runbook]]、[[wiki/architecture/implicit-contracts]]。下方為原始設計細節（歷史背景）。
 
 ---
 
