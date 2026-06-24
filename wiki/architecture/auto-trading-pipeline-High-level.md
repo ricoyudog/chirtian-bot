@@ -18,7 +18,7 @@ status: active
 
 ## 實作現況（2026-06，權威；下方設計細節為歷史背景）
 
-**全鏈路已實作並實測上線**（Webull HK paper）：真實 parser（claude/glm-5.2）+ 真實 TradingAgents（DeepSeek）+ 真實 broker，**已下一筆真實模擬單**（broker order_id `037NFMNA3C80O0K8CAG8000000`）。下方「Module 設計」的許多組件名/傳輸是早期設計，以本節對應的實際代碼為準。
+**全鏈路已實作，並於 2026-06-24 在真實 Christian 帖上端到端跑通**（Webull HK paper）：真實 parser（claude/glm-5.2）→ 真實 TradingAgents（DeepSeek）→ 真實 broker，每段皆真實、每個安全門正確觸發。注意：實際「下到帳號」的單目前皆經 `run-direct`（直注指令、**未經 parser**），例如 broker order_id `037NNQ2UO080O0K8CAG8000000`（AAPL BUY 14 @ 295.77，`--ta skip`）；真實 TA 目前對 AAPL/TSLA 打 `Underweight` → 反對 BUY → fusion 正確擋下（fail-closed）。Parser 另依賴 operator 自建網關 `sub2api`（見 [[hot]] 坑點）。下方「Module 設計」的許多組件名/傳輸是早期設計，以本節對應的實際代碼為準。
 
 ### 設計 → 實際代碼對應
 

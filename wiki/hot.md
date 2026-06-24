@@ -1,6 +1,6 @@
 ---
 type: wiki
-updated: 2026-06-23
+updated: 2026-06-24
 tags: [hot, entry]
 pinned: true
 ---
@@ -10,26 +10,15 @@ pinned: true
 > 約 500 字 | 硬上限 600 字 | 每次 session 更新 | 人與 AI 的第一入口
 
 ## 進行中變更
-- **全鏈路已接通並實測上線**(模擬倉):Substack → parser → TradingAgents → Webull。**真實下單成功**(broker order_id `037NFMNA3C80O0K8CAG8000000`)。
-- **Substack 付費 session 已恢復 + 認證閘門修好**(2026-06-23):session 從 operator 真 Chrome 抽取存入 `storage-state.json`;並 patch mcp-substack 過時的 auth probe endpoint。`poll` 認證閘門整合測試通過(0 新帖=正常)。詳見 [[wiki/operations/auto-trading-runbook|runbook]] §1.7。`run --post-file`(本地帖)本來就不受影響。
-
-## 已驗證(本 session)
-- ② 真實 parser(claude/glm-5.2):**修了 5 個潛伏 bug** 後可正確解析真實 Christian 帖(賣出tsla→SELL TSLA、加倉short pltr→SHORT PLTR)。見 [[wiki/decisions/2026-06-15-pipeline-orchestrator]]。
-- ③ 真實 TradingAgents(DeepSeek):回傳評級(Overweight / Underweight);`ta_gateway` 注入 DEEPSEEK_API_KEY。
-- ④ Webull HK broker:真實單下成功(price-tick 修正 $0.01)。AAPL 支援;**TSLA 此模擬倉不支援**(UNSUPPORTED_SYMBOL)。
-- ① Ingestion:`poll` 指令 + seen-state + `process_parse_result`(避免重複 LLM 解析)。
-- ⑤ Substack session:`poll` auth gate(`assertUsableSession`)整合測試通過;16 cookies(`substack.sid` / `substack.lli` JWT)成功從 operator Chrome 解密抽取。
+- **全鏈路在真實 Christian 帖上端到端跑通**(2026-06-24):真實帖 `2025-07-24`→parser(claude)→TradingAgents(DeepSeek)→fusion→白名單/broker 閘門,每段真實、安全門正確觸發。真實 TA 現對 AAPL/TSLA 打 `Underweight`→反對 BUY→正確擋下(fail-closed)。
+- **真實單在 paper 帳號**:AAPL BUY 14 @ 295.77,order `037NNQ2UO080O0K8CAG8000000`(PENDING)。因 TA 看空擋 BUY,該單以 `run-direct --ta skip` 下。
+- **更正先前高估**:舊 `037NFMNA...` 單是 run-direct(**未經 parser** 的直注),非 polled/解析帖;「解析帖→單」直到 2026-06-24 才跑通。
+- Webull HK paper 帳號**僅支援 AAPL**;TSLA/PLTR/SMCI/NVDA 等全 `UNSUPPORTED_SYMBOL`。Ingestion + Substack auth gate 正常,見 [[wiki/operations/auto-trading-runbook|runbook]] §1.7。
 
 ## 最近坑點
-- **`ClaudeCliClient` 之前根本沒解 claude 的 envelope/fences/budget** → 真實 LLM 從沒跑通(gold-set 測試 mock 了 client,掩蓋了)。已修。
-- **`_build_prompt` 沒帶 `_SYSTEM_PROMPT`** → 模型不知輸出契約、自創格式。已修。
-- **Webull HK paper 帳號不支援 TSLA**(只 AAPL 等);白名單要對齊帳號實際支援的標的。
-- Substack 用 **magic-link** 登入(非驗證碼、無 captcha);session 在 `~/.config/mcp-substack/storage-state.json`。
-- **Substack 移除了 auth probe endpoint `/api/v1/subscriptions/page`**(2026-06)→ mcp-substack 把有效 session 誤判成未登入(永遠 404)。已 patch → `/api/v1/subscriptions?tvOnly=false`(200 authed / 401 unauth)。抽取真 Chrome session 的方法(Chrome 預設目錄限制 + Keychain 加密)見 runbook §1.7。
+- **Parser 硬依賴自建網關 `sub2api-production-4d3a.up.railway.app`**(`~/.claude/settings.json` `ANTHROPIC_BASE_URL`)。2026-06-24 回 **502「Upstream access forbidden」**→parser/`poll`/`run --post-file` 全癱到網關恢復。**非代碼問題**。
+- **Webull 4 bug(2026-06-24 已修)**:① open-orders 字段錯層(真實字段在 `o["orders"][0]`+`total_quantity`→snapshot 遇掛單崩)② order_detail 要 `client_order_id` 非 `order_id` ③ run-direct `--post-id` 沒傳進(永遠 `instr:direct:0` 撞舊單)④ parser timeout 寫死 180s(改 `LLM_PARSER_TIMEOUT_SECONDS` env)。
 
 ## 最近交付
-- `a63d8d1` fix(executor): round limit price to $0.01 tick
-- `f1d8ac7` fix(parser): make real LLM parsing work end-to-end
-- `0eef592` feat(ingestion): wire Substack → orchestrator + harden TA gateway
-- `553562c` / `f25a7d9` Webull HK OpenAPI SDK shim
-- 2026-06-23 Substack:抽 operator 真 Chrome session(`scripts/substack-extract-copied-profile.mjs`)+ patch mcp-substack probe endpoint。
+- 2026-06-24 修上列 4 bug + `scripts/probe_broker_support.py` 只讀診斷;測試 **136 passed 無回歸**。
+- `a63d8d1` price-tick / `f1d8ac7` parser / `0eef592` Substack→orchestrator / `553562c`+`f25a7d9` Webull shim。
