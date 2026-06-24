@@ -115,19 +115,30 @@ def _handle(req: dict, sdk, extract) -> None:
                 (data or {}).get("orders") or (data or {}).get("items") or []
             )
             norm = []
-            for o in raw:
-                if not isinstance(o, dict):
+            for group in raw:
+                if not isinstance(group, dict):
                     continue
-                lp = _to_float(o.get("limit_price"))
-                norm.append({
-                    "order_id": o.get("order_id") or o.get("id"),
-                    "symbol": o.get("symbol"),
-                    "side": o.get("side"),
-                    "quantity": int(_to_float(o.get("quantity") or o.get("qty"))),
-                    "order_type": o.get("order_type"),
-                    "limit_price": lp or None,
-                    "status": o.get("status"),
-                })
+                # Webull nests the real order fields under a per-order "orders"
+                # leg list (combo_type NORMAL → one leg). Fall back to the group
+                # itself if it is already a flat order object.
+                legs = group.get("orders") if isinstance(group.get("orders"), list) else None
+                candidates = legs if legs else [group]
+                for o in candidates:
+                    if not isinstance(o, dict):
+                        continue
+                    lp = _to_float(o.get("limit_price"))
+                    qty = _to_float(
+                        o.get("total_quantity") or o.get("quantity") or o.get("qty")
+                    )
+                    norm.append({
+                        "order_id": o.get("order_id") or o.get("id"),
+                        "symbol": o.get("symbol"),
+                        "side": o.get("side"),
+                        "quantity": int(qty),
+                        "order_type": o.get("order_type"),
+                        "limit_price": lp or None,
+                        "status": o.get("status"),
+                    })
             return _emit(True, norm)
 
         # ---- market data ---------------------------------------------
@@ -165,8 +176,12 @@ def _handle(req: dict, sdk, extract) -> None:
             return _emit(True, data if isinstance(data, dict) else {"raw": data})
 
         if action == "order_detail":
+            # SDK get_order_detail(account_id, client_order_id) — keyed on
+            # client_order_id, not the broker order_id. Accept either from the
+            # caller (adapter sends "order_id") and pass it as client_order_id.
+            coid = req.get("client_order_id") or req.get("order_id", "")
             data = extract(trade.order_v3.get_order_detail(
-                account_id=account_id, order_id=req.get("order_id", ""),
+                account_id=account_id, client_order_id=coid,
             ))
             return _emit(True, data if isinstance(data, dict) else {"raw": data})
 

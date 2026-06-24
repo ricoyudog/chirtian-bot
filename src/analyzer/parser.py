@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from src.analyzer.context_loader import load_reference_context
@@ -161,10 +162,13 @@ class InstructionParser:
         error_reason: str | None = None
 
         try:
+            # The reference-context prompt is large; 180s is too tight under
+            # load. Override via LLM_PARSER_TIMEOUT_SECONDS (default unchanged).
+            parser_timeout = int(os.environ.get("LLM_PARSER_TIMEOUT_SECONDS", "180"))
             llm_response = self._llm.complete_json(
                 prompt=prompt,
                 schema=LLM_OUTPUT_SCHEMA,
-                timeout_seconds=180,
+                timeout_seconds=parser_timeout,
             )
         except LLMError as exc:
             error_reason = f"{type(exc).__name__}: {exc}"

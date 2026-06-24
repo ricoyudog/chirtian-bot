@@ -53,7 +53,11 @@ def cmd_run_direct(args: argparse.Namespace) -> int:
         with_parser=False,
     )
 
-    instruction = make_direct_instruction(args.symbol, args.action, args.pct)
+    # Pass --post-id through so each direct run gets a distinct instruction_id
+    # (default "direct") instead of always colliding on instr:direct:0.
+    instruction = make_direct_instruction(
+        args.symbol, args.action, args.pct, post_id=args.post_id,
+    )
     outcome = stack.pipeline.process_instruction(instruction, stack.account_id)
     _print_outcomes([outcome])
     return 0 if outcome.placed else 1
