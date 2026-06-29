@@ -4,16 +4,24 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from src.config.settings import RiskConfig, RuntimeConfig
 from src.shadow.metrics import MetricsCollector
 from src.shadow.runner import (
+    PipelineResult,
     ShadowObservationRunner,
     is_deferred_window,
     is_trading_day,
     next_trading_day,
-    PipelineResult,
 )
 from src.shadow.state import ObservationStateStore
+from src.shadow.wiring import DryRunPipeline, build_shadow_stack
 from src.state.ledger import AuditLedger
+
+
+# A Wednesday — pinned so deferred-window (weekend) logic never makes these
+# tests date-dependent / flaky.
+def _wednesday():
+    return datetime(2026, 6, 10, tzinfo=UTC)
 
 
 @pytest.fixture
@@ -184,7 +192,12 @@ class TestTradingDayHelpers:
 
 
 class TestShadowObservationRunner:
-    def test_process_signal_without_pipeline(self, runner, state_store):
+    def test_process_signal_without_pipeline(self, state_store, metrics, ledger):
+        # Pinned clock (Wednesday) so the deferred-window path can't flip this
+        # to "deferred" on a weekend.
+        runner = ShadowObservationRunner(
+            state_store, metrics, ledger, now=_wednesday,
+        )
         state_store.start()
         result = runner.process_signal("test signal", "sig-1")
         assert result.signal_id == "sig-1"
@@ -268,7 +281,9 @@ class TestFakePipeline:
                     outcome="success",
                 )
 
-        runner = ShadowObservationRunner(state_store, metrics, ledger, pipeline=FakePipeline())
+        runner = ShadowObservationRunner(
+            state_store, metrics, ledger, pipeline=FakePipeline(), now=_wednesday,
+        )
         state_store.start()
         result = runner.process_signal("buy AAPL 1%", "sig-1")
         assert result.outcome == "success"
@@ -278,3 +293,42 @@ class TestFakePipeline:
         assert "detection" in report.stages
         assert "parse" in report.stages
         assert "broker" in report.stages
+
+
+def _shadow_config() -> RuntimeConfig:
+    return RuntimeConfig(
+        mode="shadow",
+        environment="uat",
+        region="US",
+        account_ids=["TEST001"],
+        confirmation_mode="auto",
+        risk=RiskConfig(
+            max_notional_usd=10000,
+            max_quantity=1000,
+            max_concentration_pct=10.0,
+            symbol_whitelist=["AAPL", "TSLA"],
+        ),
+    )
+
+
+class TestShadowStackSafety:
+    def test_dry_run_pipeline_default_is_safe(self, tmp_path, monkeypatch):
+        """Bare build_shadow_stack (no pipeline/dry_run/env) must stay dry-run.
+
+        Safety invariant: never construct a real Webull-backed TradingPipeline
+        without explicit opt-in.
+        """
+        monkeypatch.delenv("SHADOW_LIVE", raising=False)
+        config = _shadow_config()
+
+        with pytest.warns(UserWarning, match="dry-run mode"):
+            stack = build_shadow_stack(
+                config,
+                ledger_path=str(tmp_path / "shadow_ledger.jsonl"),
+                state_db_path=str(tmp_path / "shadow_state.db"),
+                incidents_dir=str(tmp_path / "incidents"),
+            )
+
+        assert isinstance(stack["pipeline"], DryRunPipeline)
+        assert stack["trading_stack"] is None
+        assert stack["adapter"] is None

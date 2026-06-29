@@ -122,6 +122,9 @@ def build_pipeline(
     ledger_dir: str | Path = "runtime",
     require_reconcile: Optional[bool] = None,
     confirm_handler: Optional[Any] = None,
+    broker: Any = None,
+    parser: Any = None,
+    ta_gateway: Optional[Any] = None,
 ) -> PipelineStack:
     """Wire the real Webull-backed pipeline stack.
 
@@ -131,13 +134,26 @@ def build_pipeline(
         Source of the TradingAgents double-confirmation.
     with_parser : bool
         Construct an LLM-backed parser (needed for ``run``; not for ``run-direct``).
+    broker : BrokerClient, optional
+        Override the Webull broker adapter. When ``None`` (default) a real
+        ``WebullCLIAdapter`` is constructed. The broker is always wrapped in a
+        ``WebullAccountProvider`` so the provider interface stays consistent.
+    parser : InstructionParser, optional
+        Override the parser. Takes precedence over ``with_parser``; when
+        ``None`` the parser is built from ``with_parser`` as before.
+    ta_gateway : optional
+        Override the TA gateway. When ``None`` it is built from ``ta_mode``.
+
+    The override kwargs let callers (e.g. the shadow adapter) reuse this
+    factory for a real ``TradingPipeline`` while injecting fakes in tests.
+    Existing callers that omit them observe no behaviour change.
     """
     ledger_dir = Path(ledger_dir)
 
     audit_ledger = AuditLedger(ledger_dir / "audit_ledger.jsonl")
     portfolio_ledger = PortfolioLedger(ledger_dir / "portfolio_ledger.jsonl")
 
-    adapter = WebullCLIAdapter()
+    adapter = broker if broker is not None else WebullCLIAdapter()
     provider = WebullAccountProvider(adapter)
 
     guard = RuntimeGuard(config)
@@ -154,9 +170,11 @@ def build_pipeline(
     execution_gate = ExecutionGate(config, audit_ledger)
     order_builder = OrderBuilder()
 
-    ta_gateway = _build_ta_gateway(ta_mode)
-    parser = (
-        InstructionParser(
+    ta_gateway = ta_gateway if ta_gateway is not None else _build_ta_gateway(ta_mode)
+    if parser is not None:
+        parser = parser
+    elif with_parser:
+        parser = InstructionParser(
             llm_client=ClaudeCliClient(
                 # Parser prompts are large (reference context + post); the default
                 # 0.05 budget is too low and aborts with error_max_budget_usd.
@@ -164,9 +182,8 @@ def build_pipeline(
             ),
             audit_ledger=audit_ledger,
         )
-        if with_parser
-        else None
-    )
+    else:
+        parser = None
 
     pipeline = TradingPipeline(
         config=config,

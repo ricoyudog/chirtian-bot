@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Callable, Optional, Protocol
 
 from src.shadow.metrics import MetricsCollector
 from src.shadow.state import ObservationStateStore
@@ -68,11 +68,13 @@ class ShadowObservationRunner:
         metrics_collector: MetricsCollector,
         ledger: AuditLedger,
         pipeline: Optional[Pipeline] = None,
+        now: Callable[[], datetime] = lambda: datetime.now(UTC),
     ):
         self._state = state_store
         self._metrics = metrics_collector
         self._ledger = ledger
         self._pipeline = pipeline
+        self._now = now
 
     def process_signal(self, signal_text: str, signal_id: str) -> PipelineResult:
         """Process a single signal through the pipeline in shadow mode."""
@@ -80,7 +82,7 @@ class ShadowObservationRunner:
         if state is None:
             raise RuntimeError("No active observation period. Start one first.")
 
-        signal_time = datetime.now(UTC)
+        signal_time = self._now()
 
         # Check deferred window
         if is_deferred_window(signal_time):
