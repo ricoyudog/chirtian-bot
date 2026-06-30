@@ -49,12 +49,26 @@ class AlertDrillRunner:
 
         Args:
             drill_type: Type of drill (e.g., "kill_switch").
-            confirm_callback: Callable that returns operator confirmation timestamp.
-                              If None, drill auto-passes (for testing).
+            confirm_callback: REQUIRED callable that returns operator confirmation
+                              timestamp. None → FAILED with NO_CONFIRM_CALLBACK
+                              (design decision #12 — auto-pass via datetime.now()
+                              does not meet Phase 5 end-to-end drill standard).
 
         Returns:
             DrillResult with pass/fail status.
         """
+        # Fail-fast: confirm_callback is required. None → FAILED without simulation.
+        if confirm_callback is None:
+            now = datetime.now(UTC).isoformat()
+            return DrillResult(
+                drill_type=drill_type,
+                started_at=now,
+                ended_at=now,
+                duration_seconds=0.0,
+                result="FAILED",
+                failure_reason="NO_CONFIRM_CALLBACK",
+            )
+
         started_at = datetime.now(UTC).isoformat()
         start_time = time.monotonic()
 
@@ -73,18 +87,14 @@ class AlertDrillRunner:
         operator_confirmation = None
         failure_reason = None
 
-        if confirm_callback is not None:
-            try:
-                deadline = time.monotonic() + self._timeout_seconds
-                operator_confirmation = confirm_callback()
-                if time.monotonic() > deadline:
-                    failure_reason = "OPERATOR_NO_RESPONSE"
-                    operator_confirmation = None
-            except Exception as exc:
-                failure_reason = f"CONFIRM_CALLBACK_ERROR: {exc}"
-        else:
-            # Auto-pass for testing without callback
-            operator_confirmation = datetime.now(UTC).isoformat()
+        try:
+            deadline = time.monotonic() + self._timeout_seconds
+            operator_confirmation = confirm_callback()
+            if time.monotonic() > deadline:
+                failure_reason = "OPERATOR_NO_RESPONSE"
+                operator_confirmation = None
+        except Exception as exc:
+            failure_reason = f"CONFIRM_CALLBACK_ERROR: {exc}"
 
         ended_at = datetime.now(UTC).isoformat()
         duration = time.monotonic() - start_time

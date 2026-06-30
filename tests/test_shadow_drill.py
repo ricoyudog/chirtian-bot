@@ -1,11 +1,10 @@
 """Unit tests for alert drill runner."""
 
-import json
-from pathlib import Path
+from datetime import UTC, datetime
 
 import pytest
 
-from src.shadow.drill import AlertDrillRunner, DrillResult, INCIDENTS_DIR
+from src.shadow.drill import AlertDrillRunner
 from src.state.ledger import AuditLedger
 
 
@@ -24,19 +23,28 @@ def runner(ledger, incidents_dir):
     return AlertDrillRunner(ledger, incidents_dir=str(incidents_dir))
 
 
+def _confirm_callback() -> str:
+    """Drill confirm_callback stub — returns an ISO-8601 timestamp.
+
+    The real callback (TelegramBot.confirm_callback) blocks on operator reply;
+    tests just need it to succeed immediately.
+    """
+    return datetime.now(UTC).isoformat()
+
+
 class TestDrillSuccess:
-    def test_auto_pass_without_callback(self, runner):
+    def test_no_callback_fails_fast(self, runner):
+        # Contract (task 3.9): None confirm_callback → FAILED + NO_CONFIRM_CALLBACK.
         result = runner.run_drill()
-        assert result.result == "PASS"
-        assert result.failure_reason is None
-        assert result.operator_confirmation is not None
+        assert result.result == "FAILED"
+        assert result.failure_reason == "NO_CONFIRM_CALLBACK"
+        assert result.duration_seconds == 0.0
 
     def test_drill_with_callback(self, runner):
         confirmed_at = None
 
         def callback():
             nonlocal confirmed_at
-            from datetime import UTC, datetime
             confirmed_at = datetime.now(UTC).isoformat()
             return confirmed_at
 
@@ -45,9 +53,10 @@ class TestDrillSuccess:
         assert result.operator_confirmation == confirmed_at
 
     def test_drill_records_to_ledger(self, runner, ledger):
-        runner.run_drill()
+        runner.run_drill(confirm_callback=_confirm_callback)
         events = ledger.query()
-        assert len(events) >= 4  # anomaly_detected, kill_switch_triggered, alert_sent, drill_pass
+        # anomaly_detected, kill_switch_triggered, alert_sent, drill_pass.
+        assert len(events) >= 4
 
 
 class TestDrillFailure:
@@ -78,7 +87,7 @@ class TestDrillFailure:
 
 class TestDrillPersistence:
     def test_writes_incident_note(self, runner, incidents_dir):
-        runner.run_drill()
+        runner.run_drill(confirm_callback=_confirm_callback)
         notes = list(incidents_dir.glob("*.md"))
         assert len(notes) == 1
         content = notes[0].read_text()
@@ -86,7 +95,7 @@ class TestDrillPersistence:
         assert "Kill Switch Drill" in content
 
     def test_note_contains_all_fields(self, runner, incidents_dir):
-        runner.run_drill()
+        runner.run_drill(confirm_callback=_confirm_callback)
         content = list(incidents_dir.glob("*.md"))[0].read_text()
         assert "Type:" in content
         assert "Started:" in content
@@ -101,7 +110,7 @@ class TestDrillGateCheck:
         assert runner.check_drill_passed() is False
 
     def test_passed_drill_returns_true(self, runner):
-        runner.run_drill()
+        runner.run_drill(confirm_callback=_confirm_callback)
         assert runner.check_drill_passed() is True
 
     def test_failed_drill_returns_false(self, ledger, incidents_dir):
@@ -116,8 +125,8 @@ class TestDrillGateCheck:
         assert runner.check_drill_passed() is False
 
     def test_mixed_drills_pass_if_any_succeeds(self, runner):
-        # Run a successful drill
-        runner.run_drill()
+        # Run a successful drill.
+        runner.run_drill(confirm_callback=_confirm_callback)
         assert runner.check_drill_passed() is True
 
     def test_nonexistent_incidents_dir(self, ledger, tmp_path):
@@ -130,11 +139,11 @@ class TestGoNoGoGate:
         assert runner.check_drill_passed() is False
 
     def test_passed_drill_allows_live(self, runner):
-        runner.run_drill()
+        runner.run_drill(confirm_callback=_confirm_callback)
         assert runner.check_drill_passed() is True
 
     def test_console_output_on_drill(self, runner, capsys):
-        runner.run_drill()
+        runner.run_drill(confirm_callback=_confirm_callback)
         captured = capsys.readouterr()
         assert "[SHADOW DRILL]" in captured.out
         assert "Kill switch drill triggered" in captured.out

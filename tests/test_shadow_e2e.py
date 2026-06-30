@@ -112,7 +112,10 @@ def test_shadow_e2e_smoke(tmp_path, monkeypatch):
     assert report.total_signals == 2
 
     # Step 5: Run alert drill
-    drill_result = drill.run_drill()
+    from datetime import UTC, datetime
+    drill_result = drill.run_drill(
+        confirm_callback=lambda: datetime.now(UTC).isoformat()
+    )
     assert drill_result.result == "PASS"
 
     # Step 6: Verify drill gate passes

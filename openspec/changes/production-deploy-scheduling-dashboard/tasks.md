@@ -33,17 +33,17 @@
 
 ## 3. Telegram Alert Bot (M3)
 
-- [ ] 3.1 Create `src/notify/` package with `__init__.py`
-- [ ] 3.2 Create `src/notify/telegram.py` — `TelegramNotifier` class: sends formatted alert messages with run_id, error summary, stage
-- [ ] 3.3 Create `src/notify/bot.py` — Telegram bot (`python-telegram-bot`): registers `/stop` handler, push alert functions
-- [ ] 3.4 Implement `/stop` command: write `runtime/kill_switch.flag`, reply confirmation message
-- [ ] 3.5 Implement pipeline error push: on any stage exception → push message (run_id + error summary + affected stage)
-- [ ] 3.6 Implement circuit breaker alert push: on consecutive_failures=5 → push message (breaker activated + kill switch engaged)
-- [ ] 3.7 Implement parser cross-check 0/3 alert push: on no_consensus → push message (post excerpt + 3 model outputs)
-- [ ] 3.8 Implement drill `confirm_callback`: send "drill confirmation request" message → wait for operator reply → return timestamp or None on timeout
-- [ ] 3.9 Modify `src/shadow/drill.py` `run_drill()`: make `confirm_callback` required parameter; `None` → `DrillResult(result="FAILED", failure_reason="NO_CONFIRM_CALLBACK")`
-- [ ] 3.10 Implement bot heartbeat: periodically write `runtime/bot_heartbeat.json`
-- [ ] 3.11 Write integration tests: `/stop` → kill_switch.flag written, drill confirm_callback with mock Telegram API, error push formatting
+- [x] 3.1 Create `src/notify/` package with `__init__.py`
+- [x] 3.2 Create `src/notify/telegram.py` — `TelegramNotifier` class: sends formatted alert messages with run_id, error summary, stage
+- [x] 3.3 Create `src/notify/bot.py` — Telegram bot (`python-telegram-bot`): registers `/stop` handler, push alert functions
+- [x] 3.4 Implement `/stop` command: write `runtime/kill_switch.flag`, reply confirmation message
+- [x] 3.5 Implement pipeline error push: on any stage exception → push message (run_id + error summary + affected stage)
+- [x] 3.6 Implement circuit breaker alert push: on consecutive_failures=5 → push message (breaker activated + kill switch engaged)
+- [x] 3.7 Implement parser cross-check 0/3 alert push: on no_consensus → push message (post excerpt + 3 model outputs)
+- [x] 3.8 Implement drill `confirm_callback`: send "drill confirmation request" message → wait for operator reply → return timestamp or None on timeout
+- [x] 3.9 Modify `src/shadow/drill.py` `run_drill()`: make `confirm_callback` required parameter; `None` → `DrillResult(result="FAILED", failure_reason="NO_CONFIRM_CALLBACK")`
+- [x] 3.10 Implement bot heartbeat: periodically write `runtime/bot_heartbeat.json`
+- [x] 3.11 Write integration tests: `/stop` → kill_switch.flag written, drill confirm_callback with mock Telegram API, error push formatting
 
 ## 4. FastAPI Dashboard (M4)
 
