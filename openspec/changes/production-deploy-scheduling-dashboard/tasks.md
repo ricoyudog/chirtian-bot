@@ -78,8 +78,8 @@
 
 ## 6. Rollback Drill (M6)
 
-- [ ] 6.1 Implement rollback scenario 1: place paper order → cancel_order() → verify cancellation → audit event → confirm portfolio ledger consistency → write `runtime/incidents/<date>-rollback-order-cancel.md`
-- [ ] 6.2 Implement rollback scenario 2: backup config.yaml → replace with known-good → restart daemon → verify healthcheck → write `runtime/incidents/<date>-rollback-config.md`
-- [ ] 6.3 Implement rollback scenario 3: docker compose down → verify runtime/ volume retained → docker compose up → verify 3 services healthy + run history preserved → write `runtime/incidents/<date>-rollback-docker.md`
-- [ ] 6.4 Run end-to-end kill switch drill with real Telegram callback (P0-1 verification) → verify PASS → write incident note
-- [ ] 6.5 Verify all P0-1 ~ P0-11 checkboxes in wiki/decisions/2026-06-29-production-deploy-scheduling-dashboard.md are complete
+- [x] 6.1 Implement rollback scenario 1: place paper order → cancel_order() → verify cancellation → audit event → confirm portfolio ledger consistency → write `runtime/incidents/<date>-rollback-order-cancel.md`
+- [x] 6.2 Implement rollback scenario 2: backup config.yaml → replace with known-good → restart daemon → verify healthcheck → write `runtime/incidents/<date>-rollback-config.md`
+- [x] 6.3 Implement rollback scenario 3: docker compose down → verify runtime/ volume retained → docker compose up → verify 3 services healthy + run history preserved → write `runtime/incidents/<date>-rollback-docker.md`
+- [x] 6.4 Run end-to-end kill switch drill with real Telegram callback (P0-1 verification) → verify PASS → write incident note
+- [x] 6.5 Verify all P0-1 ~ P0-11 checkboxes in wiki/decisions/2026-06-29-production-deploy-scheduling-dashboard.md are complete
