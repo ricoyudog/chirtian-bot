@@ -14,6 +14,7 @@ duplicate → blocked.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import date
 from typing import Any, Callable, Optional
@@ -152,6 +153,18 @@ class TradingPipeline:
 
         Entry point for ingestion, where ``SignalDetector`` has already parsed
         the post — avoids a second LLM call that ``process_post`` would make.
+
+        Two phases (design decision #9):
+
+        * **Phase 1 — parallel TA + fusion.** Each symbol's TA analysis is
+          fully independent (no shared state), so all ``_fuse()`` calls are
+          submitted to a ``ThreadPoolExecutor``. TA is the slow stage
+          (~30min/symbol), so parallelizing it gives the biggest win.
+        * **Phase 2 — serial sizing + order.** Sizing reads the portfolio
+          snapshot (buying power) and order placement mutates the portfolio
+          ledger; running these in parallel would double-deduct buying power
+          and over-buy. So APPROVE/MODIFY survivors are processed one at a
+          time, in the order Phase 1 returns them.
         """
         if parse_result.status != "EXECUTABLE":
             return [
@@ -164,14 +177,94 @@ class TradingPipeline:
                 ),
             ]
 
-        return [self.process_instruction(inst, account_id) for inst in parse_result.instructions]
+        instructions = parse_result.instructions
+
+        # ponytail: 8 workers is a sane ceiling for I/O-bound TA calls; capped
+        # by instruction count so we never spin up idle threads for tiny posts.
+        max_workers = max(1, min(len(instructions), 8))
+        fuse_result_t = tuple[ParsedInstruction, Optional[FusionDecision], Optional[BaseException]]
+        fuse_results: list[fuse_result_t] = []
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            future_to_inst = {
+                pool.submit(self._fuse, inst): inst for inst in instructions
+            }
+            for future in as_completed(future_to_inst):
+                inst = future_to_inst[future]
+                try:
+                    decision = future.result()
+                except BaseException as exc:
+                    fuse_results.append((inst, None, exc))
+                else:
+                    fuse_results.append((inst, decision, None))
+
+        # Preserve input order so callers see deterministic sequencing.
+        order_index = {id(inst): i for i, inst in enumerate(instructions)}
+        fuse_results.sort(key=lambda r: order_index[id(r[0])])
+
+        # Phase 2: serial sizing + order for APPROVE/MODIFY survivors.
+        outcomes: list[InstructionOutcome] = []
+        for inst, decision, error in fuse_results:
+            oid = inst.instruction_id
+            symbol = inst.symbol
+            action = inst.action
+
+            if error is not None:
+                outcomes.append(
+                    InstructionOutcome(
+                        instruction_id=oid,
+                        symbol=symbol,
+                        action=action,
+                        outcome=OUTCOME_BLOCKED,
+                        reason="TA_FUSION_ERROR",
+                        error=repr(error),
+                    ),
+                )
+                continue
+
+            assert decision is not None  # error is None ⇒ future.result() succeeded
+            if decision.fusion_status == FUSION_REJECT:
+                outcomes.append(
+                    InstructionOutcome(
+                        instruction_id=oid,
+                        symbol=symbol,
+                        action=action,
+                        outcome=OUTCOME_REJECTED,
+                        reason=decision.reason,
+                        fusion_status=decision.fusion_status,
+                        ta_rating=decision.ta_rating,
+                    ),
+                )
+                continue
+
+            if decision.fusion_status == FUSION_NEEDS_REVIEW:
+                outcomes.append(
+                    InstructionOutcome(
+                        instruction_id=oid,
+                        symbol=symbol,
+                        action=action,
+                        outcome=OUTCOME_NEEDS_REVIEW,
+                        reason=decision.reason,
+                        fusion_status=decision.fusion_status,
+                        ta_rating=decision.ta_rating,
+                    ),
+                )
+                continue
+
+            outcomes.append(self._process_post_fusion(inst, decision, account_id))
+
+        return outcomes
 
     def process_instruction(
         self,
         instruction: ParsedInstruction,
         account_id: str,
     ) -> InstructionOutcome:
-        """Run one instruction through the full pipeline."""
+        """Run one instruction through the full pipeline.
+
+        Single-instruction entry point (CLI direct-injection path). Preserved
+        verbatim so existing callers/tests behave identically; multi-instruction
+        posts should go through ``process_parse_result`` for Phase 1 parallelism.
+        """
         oid = instruction.instruction_id
         symbol = instruction.symbol
         action = instruction.action
@@ -203,6 +296,25 @@ class TradingPipeline:
                 fusion_status=decision.fusion_status,
                 ta_rating=decision.ta_rating,
             )
+
+        # 3-12. Sizing → order (serial; depends on portfolio snapshot/ledger).
+        return self._process_post_fusion(instruction, decision, account_id)
+
+    def _process_post_fusion(
+        self,
+        instruction: ParsedInstruction,
+        decision: FusionDecision,
+        account_id: str,
+    ) -> InstructionOutcome:
+        """Stages 3-12: apply fused quantity, then size → gate → place → record.
+
+        MUST run serially across instructions within one post: sizing reads the
+        portfolio snapshot (buying power) and order placement mutates the
+        portfolio ledger. Parallelizing here would double-deduct buying power.
+        """
+        oid = instruction.instruction_id
+        symbol = instruction.symbol
+        action = instruction.action
 
         # 3. Apply fused quantity (MODIFY halves it)
         fused_pct = decision.suggested_quantity_pct

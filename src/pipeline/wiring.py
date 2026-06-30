@@ -185,6 +185,15 @@ def build_pipeline(
     else:
         parser = None
 
+    # P0-3: TA must be mandatory when whitelist is empty.
+    # Empty whitelist + no TA = zero safety gates. Fail fast at startup.
+    if ta_gateway is None and len(config.risk.symbol_whitelist) == 0:
+        raise RuntimeError(
+            "P0-3 violation: ta_gateway is None (TA_SKIP) and symbol_whitelist is empty. "
+            "This combination has zero safety gates. Either enable TA (ta_mode=real|stub) "
+            "or add symbols to risk.symbol_whitelist in config."
+        )
+
     pipeline = TradingPipeline(
         config=config,
         provider=provider,

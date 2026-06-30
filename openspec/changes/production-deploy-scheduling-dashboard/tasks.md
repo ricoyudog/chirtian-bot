@@ -14,22 +14,22 @@
 
 ## 2. Poll Daemon (M2)
 
-- [ ] 2.1 Create `src/ops/daemon.py` — main tick loop: `while not stop_event: poll_once() → pipeline → RunRecorder → heartbeat`
-- [ ] 2.2 Create `src/ops/__main__.py` — CLI entry: `python -m src.ops`
-- [ ] 2.3 Implement reentrancy lock via `fcntl.flock` / `msvcrt.locking` on `runtime/daemon.lock`, prevent dual-start
-- [ ] 2.4 Implement heartbeat: write `runtime/daemon_heartbeat.json` on every tick (`last_tick`, `pid`, `status`)
-- [ ] 2.5 Implement circuit breaker: `consecutive_failures` counter; N=5 → write `kill_switch.flag` + Telegram alert + exit; reset on success
-- [ ] 2.6 Implement dead-man switch readiness: heartbeat file age checkable by Docker healthcheck (≤ 120s)
-- [ ] 2.7 Implement tick-abort: register SIGTERM handler → `threading.Event.set()`; TA stage checks event → SIGTERM subprocess
-- [ ] 2.8 Implement kill_switch.flag check at startup: exists → invoke `RuntimeGuard.activate_stop()` → refuse to start
-- [ ] 2.9 Implement startup SQLite integrity check: `PRAGMA integrity_check` on `shadow_state.db` + `positions.db`; fail → refuse to start
-- [ ] 2.10 Implement startup JSONL purge: delete `runs-*.jsonl` older than 13 months
-- [ ] 2.11 Modify `src/pipeline/orchestrator.py` `process_parse_result()`: split into Phase 1 (parallel TA via `ThreadPoolExecutor`) + Phase 2 (serial sizing/order)
-- [ ] 2.12 Modify `src/pipeline/wiring.py` `build_pipeline()`: add P0-3 assertion — `ta_gateway is None AND len(symbol_whitelist) == 0 → RuntimeError`
-- [ ] 2.13 Wire daemon to use `CrossCheckParser` (not `InstructionParser`) for automatic poll path
-- [ ] 2.14 Implement daemon positions snapshot: each tick → pull broker API positions → write `runtime/positions.db` (table `position_snapshots`)
-- [ ] 2.15 Implement JSONL monthly rotation: detect month boundary → start new `runs-YYYY-MM.jsonl`
-- [ ] 2.16 Write integration tests: daemon startup/shutdown, lock contention, circuit breaker trigger+reset, tick-abort with mock TA subprocess
+- [x] 2.1 Create `src/ops/daemon.py` — main tick loop: `while not stop_event: poll_once() → pipeline → RunRecorder → heartbeat`
+- [x] 2.2 Create `src/ops/__main__.py` — CLI entry: `python -m src.ops`
+- [x] 2.3 Implement reentrancy lock via `fcntl.flock` / `msvcrt.locking` on `runtime/daemon.lock`, prevent dual-start
+- [x] 2.4 Implement heartbeat: write `runtime/daemon_heartbeat.json` on every tick (`last_tick`, `pid`, `status`)
+- [x] 2.5 Implement circuit breaker: `consecutive_failures` counter; N=5 → write `kill_switch.flag` + Telegram alert + exit; reset on success
+- [x] 2.6 Implement dead-man switch readiness: heartbeat file age checkable by Docker healthcheck (≤ 120s)
+- [x] 2.7 Implement tick-abort: register SIGTERM handler → `threading.Event.set()`; TA stage checks event → SIGTERM subprocess
+- [x] 2.8 Implement kill_switch.flag check at startup: exists → invoke `RuntimeGuard.activate_stop()` → refuse to start
+- [x] 2.9 Implement startup SQLite integrity check: `PRAGMA integrity_check` on `shadow_state.db` + `positions.db`; fail → refuse to start
+- [x] 2.10 Implement startup JSONL purge: delete `runs-*.jsonl` older than 13 months
+- [x] 2.11 Modify `src/pipeline/orchestrator.py` `process_parse_result()`: split into Phase 1 (parallel TA via `ThreadPoolExecutor`) + Phase 2 (serial sizing/order)
+- [x] 2.12 Modify `src/pipeline/wiring.py` `build_pipeline()`: add P0-3 assertion — `ta_gateway is None AND len(symbol_whitelist) == 0 → RuntimeError`
+- [x] 2.13 Wire daemon to use `CrossCheckParser` (not `InstructionParser`) for automatic poll path
+- [x] 2.14 Implement daemon positions snapshot: each tick → pull broker API positions → write `runtime/positions.db` (table `position_snapshots`)
+- [x] 2.15 Implement JSONL monthly rotation: detect month boundary → start new `runs-YYYY-MM.jsonl`
+- [x] 2.16 Write integration tests: daemon startup/shutdown, lock contention, circuit breaker trigger+reset, tick-abort with mock TA subprocess
 
 ## 3. Telegram Alert Bot (M3)
 
