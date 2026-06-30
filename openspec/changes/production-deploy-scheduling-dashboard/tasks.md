@@ -47,20 +47,20 @@
 
 ## 4. FastAPI Dashboard (M4)
 
-- [ ] 4.1 Create `src/dashboard/` package with `__init__.py`
-- [ ] 4.2 Create `src/dashboard/app.py` — FastAPI app with CORS, static file serving, route registration
-- [ ] 4.3 Implement `GET /api/runs` — paginated list from `runs.jsonl`
-- [ ] 4.4 Implement `GET /api/runs/{run_id}` — single run detail cross-ref `audit_ledger.jsonl`
-- [ ] 4.5 Implement `GET /api/metrics` — per-stage p50/p95/max from `runs.jsonl` stage_timings; reuse `MetricsCollector.generate_report()`
-- [ ] 4.6 Implement `GET /api/safety` — RuntimeGuard.is_stopped + kill_switch.flag existence
-- [ ] 4.7 Implement `GET /api/events/tail` — SSE stream tailing `audit_ledger.jsonl`
-- [ ] 4.8 Implement `GET /api/health` — combined: daemon (heartbeat age ≤ 120s → ok/stale), dashboard (uptime), bot (bot_heartbeat.json age), safety (guard status)
-- [ ] 4.9 Implement `GET /api/posts` — from `processed_posts.json` cross-ref `runs.jsonl`
-- [ ] 4.10 Implement `GET /api/positions` — from `positions.db` (latest tick); return symbol, position_qty, market_value, unrealized_pnl, pnl_pct
-- [ ] 4.11 Implement `POST /api/kill-switch` — validate `X-Kill-Switch-Secret` header → write `kill_switch.flag`; 403 on invalid/missing
-- [ ] 4.12 Implement `GET /` — serve `static/index.html` (dashboard SPA)
-- [ ] 4.13 Bind dashboard to `127.0.0.1` (not `0.0.0.0`), configure CORS for localhost only
-- [ ] 4.14 Write integration tests: all routes return expected shape, kill-switch auth, SSE stream, health stale detection
+- [x] 4.1 Create `src/dashboard/` package with `__init__.py`
+- [x] 4.2 Create `src/dashboard/app.py` — FastAPI app with CORS, static file serving, route registration
+- [x] 4.3 Implement `GET /api/runs` — paginated list from `runs.jsonl`
+- [x] 4.4 Implement `GET /api/runs/{run_id}` — single run detail cross-ref `audit_ledger.jsonl`
+- [x] 4.5 Implement `GET /api/metrics` — per-stage p50/p95/max from `runs.jsonl` stage_timings; reuse `MetricsCollector.generate_report()`
+- [x] 4.6 Implement `GET /api/safety` — RuntimeGuard.is_stopped + kill_switch.flag existence
+- [x] 4.7 Implement `GET /api/events/tail` — SSE stream tailing `audit_ledger.jsonl`
+- [x] 4.8 Implement `GET /api/health` — combined: daemon (heartbeat age ≤ 120s → ok/stale), dashboard (uptime), bot (bot_heartbeat.json age), safety (guard status)
+- [x] 4.9 Implement `GET /api/posts` — from `processed_posts.json` cross-ref `runs.jsonl`
+- [x] 4.10 Implement `GET /api/positions` — from `positions.db` (latest tick); return symbol, position_qty, market_value, unrealized_pnl, pnl_pct
+- [x] 4.11 Implement `POST /api/kill-switch` — validate `X-Kill-Switch-Secret` header → write `kill_switch.flag`; 403 on invalid/missing
+- [x] 4.12 Implement `GET /` — serve `static/index.html` (dashboard SPA)
+- [x] 4.13 Bind dashboard to `127.0.0.1` (not `0.0.0.0`), configure CORS for localhost only
+- [x] 4.14 Write integration tests: all routes return expected shape, kill-switch auth, SSE stream, health stale detection
 
 ## 5. Docker Deployment (M5)
 
