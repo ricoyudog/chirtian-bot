@@ -1,0 +1,61 @@
+# Test deployment — offline_replay mode, all external deps stubbed.
+# Spec: "docker compose -f docker-compose.test.yml up --abort-on-container-exit
+#        → all services start, pass healthchecks, kill switch verified."
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml build
+#   docker compose -f docker-compose.test.yml up --abort-on-container-exit
+#
+# This file OVERRIDES docker-compose.yml — `docker compose -f docker-compose.yml
+# -f docker-compose.test.yml up` merges both, the test file winning on conflicts.
+
+services:
+  daemon:
+    # offline_replay: no real Substack poll / no Webull / no DeepSeek.
+    # Config overlays mode via env (config.yaml already supports mode override).
+    environment:
+      - CHRISTIAN_BOT_MODE=offline_replay
+      - STUB_SUBSTACK=1
+      - STUB_WEBULL=1
+      - STUB_DEEPSEEK=1
+      # Allow test to pass without real creds.
+      - DEEPSEEK_API_KEY=test-stub
+      - TELEGRAM_BOT_TOKEN=000000000:TEST-test-stub
+      - TELEGRAM_CHAT_ID=-1
+      - WEBULL_UAT_ACCOUNT_ID=test-stub
+      - DASHBOARD_KILL_SWITCH_SECRET=test-stub
+    healthcheck:
+      # Same heartbeat-age check as prod; daemon writes heartbeat in offline mode too.
+      test:
+        - CMD-SHELL
+        - >
+          jq -e --arg age "$(($(date +%s) - $(date -d "$(jq -r .last_tick /app/runtime/daemon_heartbeat.json 2>/dev/null || echo '1970-01-01T00:00:00')" +%s)))"
+          '$age | tonumber <= 120' > /dev/null 2>&1 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  dashboard:
+    environment:
+      - CHRISTIAN_BOT_MODE=offline_replay
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  bot:
+    environment:
+      - CHRISTIAN_BOT_MODE=offline_replay
+      - STUB_TELEGRAM=1
+      - TELEGRAM_BOT_TOKEN=000000000:TEST-test-stub
+      - TELEGRAM_CHAT_ID=-1
+    healthcheck:
+      # Stubs make external API unreachable — only verify the process is alive.
+      test: ["CMD-SHELL", "pgrep -f 'src.notify.bot' > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s

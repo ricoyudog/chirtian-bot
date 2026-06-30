@@ -1,0 +1,85 @@
+# Christian Bot — three-service deployment.
+# Design decisions: docker-deploy spec + design.md #4 (shared runtime volume),
+# #5 (stop_grace_period 120s for tick-abort), #10 (expose not ports on
+# dashboard — Decision #11 binds to 127.0.0.1, dashboard is local-only),
+# #13 (per-service memory limits).
+
+services:
+  daemon:
+    build: .
+    image: christian-bot:latest
+    command: python -m src.ops
+    restart: unless-stopped
+    stop_grace_period: 120s
+    mem_limit: 1GB
+    env_file: .env
+    volumes:
+      - runtime:/app/runtime
+      # Substack session (cookies) — read-only so host updates flow through
+      # without a container restart (spec: "Cookie update without container restart").
+      - ./storage-state.json:/app/storage-state.json:ro
+      # Config overlay — operator edits config.yaml on host, no rebuild.
+      - ./config.yaml:/app/config.yaml:ro
+    healthcheck:
+      # daemon_heartbeat.json age ≤ 120s — matches dead-man switch window (Task 2.6).
+      test:
+        - CMD-SHELL
+        - >
+          jq -e --arg age "$(($(date +%s) - $(date -d "$(jq -r .last_tick /app/runtime/daemon_heartbeat.json 2>/dev/null || echo '1970-01-01T00:00:00')" +%s)))"
+          '$age | tonumber <= 120' > /dev/null 2>&1 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  dashboard:
+    image: christian-bot:latest
+    build: ./
+    command: uvicorn src.dashboard.app:create_app --factory --host 127.0.0.1 --port 8000
+    restart: unless-stopped
+    mem_limit: 256MB
+    env_file: .env
+    depends_on:
+      daemon:
+        condition: service_started
+    volumes:
+      - runtime:/app/runtime:ro
+      - ./config.yaml:/app/config.yaml:ro
+    # expose (not ports) — Decision #11: dashboard binds 127.0.0.1 only,
+    # internal Docker network access for the reverse proxy / ssh tunnel.
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  bot:
+    image: christian-bot:latest
+    build: ./
+    command: python -m src.notify.bot
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      daemon:
+        condition: service_started
+    volumes:
+      - runtime:/app/runtime
+      - ./config.yaml:/app/config.yaml:ro
+    healthcheck:
+      # Process alive (pgrep) + Telegram API reachable.
+      test:
+        - CMD-SHELL
+        - >
+          pgrep -f "src.notify.bot" > /dev/null &&
+          curl -fsS -m 5 "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe" > /dev/null 2>&1 || exit 1
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  # Shared across all three services — daemon writes runs.jsonl, dashboard reads it.
+  runtime:

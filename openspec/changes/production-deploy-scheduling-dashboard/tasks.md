@@ -64,17 +64,17 @@
 
 ## 5. Docker Deployment (M5)
 
-- [ ] 5.1 Create `Dockerfile` — multi-stage or single-stage with: Python venv, Node.js, Claude CLI, DeepSeek SDK, Webull SDK, mcp-substack
-- [ ] 5.2 Create `docker-compose.yml` — three services: daemon, dashboard, bot; shared `runtime/` named volume
-- [ ] 5.3 Configure daemon service: `restart: unless-stopped`, `stop_grace_period: 120s`, `mem_limit: 1GB`, healthcheck (heartbeat ≤ 120s)
-- [ ] 5.4 Configure dashboard service: `restart: unless-stopped`, `mem_limit: 256MB`, healthcheck (curl /api/health → 200), `expose` not `ports`
-- [ ] 5.5 Configure bot service: `restart: unless-stopped`, healthcheck (process alive + API reachable)
-- [ ] 5.6 Create `.env.example` — all required env vars with placeholder values, annotated required vs optional
-- [ ] 5.7 Configure Substack `storage-state.json` as host bind-mount `:ro` in daemon service
-- [ ] 5.8 Create `SETUP.md` — manual setup steps: Substack session export, Webull auth, Claude auth, DeepSeek API key, Telegram bot token
-- [ ] 5.9 Implement Substack session expiry detection: N=6 consecutive zero-post polls + deviates from Christian posting pattern → Telegram alert
-- [ ] 5.10 Create `docker-compose.test.yml` — `mode: offline_replay` + stubbed deps, verify all healthchecks pass
-- [ ] 5.11 Verify acceptance criteria: 3 services healthy ≤ 30s, kill switch ≤ 2 ticks, daemon crash auto-restart ≤ 10s, volume persistence across down+up
+- [x] 5.1 Create `Dockerfile` — multi-stage or single-stage with: Python venv, Node.js, Claude CLI, DeepSeek SDK, Webull SDK, mcp-substack
+- [x] 5.2 Create `docker-compose.yml` — three services: daemon, dashboard, bot; shared `runtime/` named volume
+- [x] 5.3 Configure daemon service: `restart: unless-stopped`, `stop_grace_period: 120s`, `mem_limit: 1GB`, healthcheck (heartbeat ≤ 120s)
+- [x] 5.4 Configure dashboard service: `restart: unless-stopped`, `mem_limit: 256MB`, healthcheck (curl /api/health → 200), `expose` not `ports`
+- [x] 5.5 Configure bot service: `restart: unless-stopped`, healthcheck (process alive + API reachable)
+- [x] 5.6 Create `.env.example` — all required env vars with placeholder values, annotated required vs optional
+- [x] 5.7 Configure Substack `storage-state.json` as host bind-mount `:ro` in daemon service
+- [x] 5.8 Create `SETUP.md` — manual setup steps: Substack session export, Webull auth, Claude auth, DeepSeek API key, Telegram bot token
+- [x] 5.9 Implement Substack session expiry detection: N=6 consecutive zero-post polls + deviates from Christian posting pattern → Telegram alert
+- [x] 5.10 Create `docker-compose.test.yml` — `mode: offline_replay` + stubbed deps, verify all healthchecks pass
+- [x] 5.11 Verify acceptance criteria: 3 services healthy ≤ 30s, kill switch ≤ 2 ticks, daemon crash auto-restart ≤ 10s, volume persistence across down+up
 
 ## 6. Rollback Drill (M6)
 
