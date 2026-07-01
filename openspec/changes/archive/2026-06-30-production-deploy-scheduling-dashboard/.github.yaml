@@ -1,0 +1,28 @@
+parent:
+  number: 34
+  url: https://github.com/ricoyudog/chirtian-bot/issues/34
+groups:
+  - number: 1
+    name: "Run Record & Parser Cross-Check (M1)"
+    issue_number: 35
+    url: https://github.com/ricoyudog/chirtian-bot/issues/35
+  - number: 2
+    name: "Poll Daemon (M2)"
+    issue_number: 36
+    url: https://github.com/ricoyudog/chirtian-bot/issues/36
+  - number: 3
+    name: "Telegram Alert Bot (M3)"
+    issue_number: 37
+    url: https://github.com/ricoyudog/chirtian-bot/issues/37
+  - number: 4
+    name: "FastAPI Dashboard (M4)"
+    issue_number: 38
+    url: https://github.com/ricoyudog/chirtian-bot/issues/38
+  - number: 5
+    name: "Docker Deployment (M5)"
+    issue_number: 39
+    url: https://github.com/ricoyudog/chirtian-bot/issues/39
+  - number: 6
+    name: "Rollback Drill (M6)"
+    issue_number: 40
+    url: https://github.com/ricoyudog/chirtian-bot/issues/40
