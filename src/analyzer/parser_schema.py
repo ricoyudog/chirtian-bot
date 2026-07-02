@@ -191,11 +191,11 @@ LLM_OUTPUT_SCHEMA: dict = {
                     "scheduled_for": {"type": ["string", "null"]},
                     "option_type": {
                         "type": ["string", "null"],
-                        "enum": ["call", "put", None],
+                        "enum": ["call", "put", "CALL", "PUT", "Call", "Put", None],
                     },
                     "option_side": {
                         "type": ["string", "null"],
-                        "enum": ["long", "short", None],
+                        "enum": ["long", "short", "buy", "sell", "open", "close", None],
                     },
                     "strike": {"type": ["number", "null"]},
                     "expiry": {"type": ["string", "null"]},

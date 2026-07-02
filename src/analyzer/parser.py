@@ -18,6 +18,24 @@ from src.analyzer.parser_schema import (
 from src.state.ledger import AuditLedger
 from src.state.models import AuditEvent
 
+
+def _normalize_option_side(value: Any) -> str | None:
+    """Map LLM-emitted option_side variants onto the schema enum ['long','short'].
+
+    The schema uses long/short, but LLMs commonly emit buy/sell (mirroring the
+    equity action) or uppercase variants. Map them deterministically.
+    """
+    if value is None:
+        return None
+    s = str(value).strip().lower()
+    # buy/long/open → long ; sell/short/close → short
+    if s in ("long", "buy", "open"):
+        return "long"
+    if s in ("short", "sell", "close"):
+        return "short"
+    return s
+
+
 # ---------------------------------------------------------------------------
 # Prompt template
 # ---------------------------------------------------------------------------
@@ -211,8 +229,12 @@ class InstructionParser:
                     market=raw_inst.get("market", "US"),
                     time_modifier=raw_inst.get("time_modifier", "immediate"),
                     scheduled_for=raw_inst.get("scheduled_for"),
-                    option_type=raw_inst.get("option_type"),
-                    option_side=raw_inst.get("option_side"),
+                    option_type=(
+                        str(raw_inst.get("option_type")).lower()
+                        if raw_inst.get("option_type") is not None
+                        else None
+                    ),
+                    option_side=_normalize_option_side(raw_inst.get("option_side")),
                     strike=raw_inst.get("strike"),
                     expiry=raw_inst.get("expiry"),
                     confidence=raw_inst.get("confidence", 0.5),

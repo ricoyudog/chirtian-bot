@@ -33,6 +33,8 @@ Thumbs.db
 .env.*
 # Plaintext Webull sandbox credentials — must NOT be committed.
 wiki/webull-api/模擬倉 key.md
+# Substack authenticated session cookies (Playwright storageState format).
+storage-state.json
 
 # Runtime (shadow observation state, summaries, incidents)
 runtime/

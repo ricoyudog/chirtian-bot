@@ -19,7 +19,7 @@ from typing import Any
 from urllib import error as urllib_error
 from urllib import request as urllib_request
 
-from src.analyzer.parser import _build_prompt
+from src.analyzer.parser import _build_prompt, _normalize_option_side
 from src.analyzer.parser_schema import (
     LLM_OUTPUT_SCHEMA,
     ParsedInstruction,
@@ -365,8 +365,12 @@ class CrossCheckParser:
                     market=raw_inst.get("market", "US"),
                     time_modifier=raw_inst.get("time_modifier", "immediate"),
                     scheduled_for=raw_inst.get("scheduled_for"),
-                    option_type=raw_inst.get("option_type"),
-                    option_side=raw_inst.get("option_side"),
+                    option_type=(
+                        str(raw_inst.get("option_type")).lower()
+                        if raw_inst.get("option_type") is not None
+                        else None
+                    ),
+                    option_side=_normalize_option_side(raw_inst.get("option_side")),
                     strike=raw_inst.get("strike"),
                     expiry=raw_inst.get("expiry"),
                     confidence=raw_inst.get("confidence", 0.5),
