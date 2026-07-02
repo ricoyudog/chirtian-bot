@@ -1,243 +1,2154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Christian Bot Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Christian Bot — Production Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
-  body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px;
-         background: #0d1117; color: #c9d1d9; }
-  h1 { color: #58a6ff; font-size: 1.5rem; margin: 0 0 16px; }
-  h2 { color: #8b949e; font-size: 1rem; text-transform: uppercase; margin: 24px 0 8px;
-       letter-spacing: 0.05em; }
-  .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
-  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
-  .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px;
-          padding: 12px 14px; }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem;
-          margin-left: 6px; }
-  .ok { background: #1a7f37; color: #fff; }
-  .stale, .stopped, .error { background: #da3633; color: #fff; }
-  .unknown { background: #6e7681; color: #fff; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th, td { padding: 5px 8px; text-align: left; border-bottom: 1px solid #21262d; }
-  th { color: #8b949e; font-weight: 600; }
-  tr:hover td { background: #1c2128; }
-  code { color: #79c0ff; }
-  .toolbar { display: flex; justify-content: space-between; align-items: center; }
-  button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
-           padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
-  button:hover { background: #30363d; }
-  button.danger { background: #da3633; border-color: #da3633; color: #fff; }
-  input.secret { background: #0d1117; color: #c9d1d9; border: 1px solid #30363d;
-                 padding: 5px 8px; border-radius: 4px; font-size: 0.85rem; width: 200px; }
-  #sse-log { max-height: 240px; overflow-y: auto; font-family: ui-monospace, monospace;
-             font-size: 0.78rem; color: #8b949e; }
-  #sse-log div { padding: 2px 0; border-bottom: 1px solid #21262d; word-break: break-all; }
-  .meta { color: #6e7681; font-size: 0.78rem; }
+/* ===================================================================
+   RESET & BASE
+   =================================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: #0a0e17;
+  color: #c9cdd4;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===================================================================
+   COLOR PALETTE
+   ===================================================================
+   bg-primary:    #0a0e17   (deep navy-black)
+   bg-secondary:  #111827   (card / panel)
+   bg-tertiary:   #1a2236   (hover / raised surface)
+   border:        #1e2d45   (subtle separator)
+   text-primary:  #e2e8f0   (headings)
+   text-secondary:#94a3b8   (labels, muted)
+   text-mono:     #c9cdd4   (data values in body)
+   accent-green:  #22c55e   (status ok, placed)
+   accent-red:    #ef4444   (status fail, blocked)
+   accent-amber:  #f59e0b   (warning, needs_review)
+   accent-blue:   #3b82f6   (links, charts, interactive)
+   accent-cyan:   #06b6d4   (SSE stream, live indicators)
+   accent-purple: #8b5cf6   (chart series B)
+   accent-pink:   #ec4899   (chart series C, kill-switch)
+   */
+
+/* ===================================================================
+   TYPOGRAPHY
+   =================================================================== */
+.label {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.mono {
+  font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.value {
+  font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+}
+
+.value-sm {
+  font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: #c9cdd4;
+  font-variant-numeric: tabular-nums;
+}
+
+.heading {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ===================================================================
+   SHELL LAYOUT
+   =================================================================== */
+.shell {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: auto auto 1fr auto auto auto;
+  gap: 12px;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+/* Header spans full width */
+.header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: #111827;
+  border: 1px solid #1e2d45;
+  border-radius: 8px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-logo {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.02em;
+}
+
+.header-badge {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.badge-paper {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-uat {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.header-clock {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* ===================================================================
+   PANEL BASE
+   =================================================================== */
+.panel {
+  background: #111827;
+  border: 1px solid #1e2d45;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1e2d45;
+}
+
+.panel-title {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.panel-badge {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+/* ===================================================================
+   PANEL 1: DAEMON HEARTBEATS (row 2, col 1-2)
+   =================================================================== */
+.panel-heartbeats {
+  grid-column: 1 / 3;
+  grid-row: 2;
+}
+
+.heartbeat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.heartbeat-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+}
+
+.hb-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.hb-indicator.green {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+}
+
+.hb-indicator.red {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.hb-indicator.amber {
+  background: #f59e0b;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.hb-indicator.green::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(34, 197, 94, 0.35);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.hb-info { display: flex; flex-direction: column; gap: 2px; }
+
+.hb-name {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.hb-detail {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ===================================================================
+   PANEL 2: SAFETY STATUS (row 2, col 3-4)
+   =================================================================== */
+.panel-safety {
+  grid-column: 3 / 5;
+  grid-row: 2;
+}
+
+.safety-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.safety-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.safety-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.safety-label {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.03em;
+}
+
+.safety-value {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.safety-value.ok     { color: #22c55e; }
+.safety-value.warn   { color: #f59e0b; }
+.safety-value.fail   { color: #ef4444; }
+.safety-value.info   { color: #3b82f6; }
+
+/* ===================================================================
+   PANEL 3: RUN HISTORY TABLE (row 3, col 1-3)
+   =================================================================== */
+.panel-runs {
+  grid-column: 1 / 4;
+  grid-row: 3;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+table.runs {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 12px;
+}
+
+table.runs thead th {
+  position: sticky;
+  top: 0;
+  background: #111827;
+  text-align: left;
+  padding: 8px 12px;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  border-bottom: 2px solid #1e2d45;
+}
+
+table.runs tbody td {
+  padding: 7px 12px;
+  border-bottom: 1px solid #1a2236;
+  color: #c9cdd4;
+  white-space: nowrap;
+}
+
+table.runs tbody tr {
+  transition: background 0.15s ease;
+}
+
+table.runs tbody tr:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.outcome-badge {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.outcome-badge.placed         { background: rgba(34, 197, 94, 0.12);  color: #22c55e; }
+.outcome-badge.skipped        { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+.outcome-badge.needs_review   { background: rgba(245, 158, 11, 0.12);  color: #f59e0b; }
+.outcome-badge.rejected       { background: rgba(239, 68, 68, 0.12);   color: #ef4444; }
+.outcome-badge.blocked        { background: rgba(239, 68, 68, 0.18);   color: #f87171; }
+
+.error-cell {
+  color: #ef4444;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.td-empty {
+  color: #475569;
+  font-style: italic;
+  text-align: center;
+  padding: 28px 12px !important;
+}
+
+/* ===================================================================
+   PANEL 4: METRICS / CHARTS (row 3, col 4)
+   =================================================================== */
+.panel-metrics {
+  grid-column: 4 / 5;
+  grid-row: 3;
+}
+
+.chart-container {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.gauge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.gauge-label {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.gauge-value {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.gauge-value.warn {
+  color: #f59e0b;
+}
+
+.gauge-value.danger {
+  color: #ef4444;
+}
+
+.chart-no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ===================================================================
+   PANEL 4.5: CHRISTIAN'S POSTS — SUBSTACK FEED (row 4, col 1-4)
+   =================================================================== */
+.panel-posts {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  max-height: 320px;
+}
+
+.posts-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.post-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+}
+
+.post-stat-label {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.post-stat-value {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+}
+
+.post-stat-value.accent { color: #06b6d4; }
+
+/* -----------------------------------------------------------------
+   Posts toolbar: search + status filters + signals-only toggle
+   ----------------------------------------------------------------- */
+.posts-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 7px 10px 7px 28px;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-input::placeholder { color: #475569; }
+
+.search-input:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.15);
+}
+
+.filter-group {
+  display: flex;
+  gap: 4px;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+  padding: 3px;
+}
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  padding: 5px 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.filter-btn:hover { color: #e2e8f0; }
+
+.filter-btn.active {
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
+}
+
+.toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  user-select: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.toggle-pill:hover { color: #e2e8f0; }
+.toggle-pill.active { border-color: rgba(6,182,212,0.5); color: #06b6d4; }
+
+.toggle-pill input { display: none; }
+
+.toggle-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1.5px solid #475569;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.toggle-pill.active .toggle-dot {
+  background: #06b6d4;
+  border-color: #06b6d4;
+}
+
+.results-count {
+  margin-left: auto;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.posts-empty {
+  text-align: center;
+  padding: 28px 12px;
+  color: #64748b;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 12px;
+}
+
+/* Date-group folder header rows */
+tr.post-group-header { cursor: pointer; }
+
+tr.post-group-header td {
+  background: #0d1320;
+  border-top: 1px solid #1e2d45 !important;
+  border-bottom: 1px solid #1e2d45 !important;
+  padding: 9px 12px !important;
+  position: sticky;
+  top: 30px;
+  z-index: 1;
+}
+
+tr.post-group-header:hover td { background: #141d33; }
+
+.group-row-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.group-folder {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.group-arrow {
+  display: inline-block;
+  color: #06b6d4;
+  font-size: 10px;
+  transition: transform 0.15s ease;
+  width: 10px;
+}
+
+.group-arrow.open { transform: rotate(90deg); }
+
+.group-date {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-size: 12px;
+}
+
+.group-dow {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.group-count {
+  margin-left: auto;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.group-count .gc-strong { color: #94a3b8; font-weight: 600; }
+
+.posts-table-wrap {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+table.posts {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 12px;
+}
+
+table.posts thead th {
+  position: sticky;
+  top: 0;
+  background: #111827;
+  text-align: left;
+  padding: 8px 12px;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  border-bottom: 2px solid #1e2d45;
+}
+
+table.posts tbody td {
+  padding: 7px 12px;
+  border-bottom: 1px solid #1a2236;
+  color: #c9cdd4;
+  white-space: nowrap;
+}
+
+table.posts tbody tr {
+  transition: background 0.15s ease;
+}
+
+table.posts tbody tr:hover {
+  background: rgba(6, 182, 212, 0.06);
+}
+
+.post-title {
+  color: #e2e8f0;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-id {
+  color: #3b82f6;
+}
+
+.signal-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+}
+
+.post-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.post-status.processed { background: rgba(34, 197, 94, 0.12);  color: #22c55e; }
+.post-status.skipped   { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+.post-status.pending   { background: rgba(245, 158, 11, 0.12);  color: #f59e0b; }
+.post-status.error     { background: rgba(239, 68, 68, 0.15);   color: #f87171; }
+
+.run-link {
+  color: #64748b;
+  font-size: 11px;
+}
+.run-link.linked { color: #3b82f6; }
+
+/* ===================================================================
+   PANEL 5: POSITIONS & ALLOCATION (row 5, col 1-4)
+   =================================================================== */
+.panel-positions {
+  grid-column: 1 / -1;
+  grid-row: 5;
+  max-height: 340px;
+}
+
+.pos-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.pos-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+}
+
+.pos-stat-label {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.pos-stat-value {
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 17px;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-stat-value.up   { color: #22c55e; }
+.pos-stat-value.down { color: #ef4444; }
+
+.pos-body {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+}
+
+.pos-donut-wrap {
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
+}
+
+.pos-donut-wrap canvas {
+  max-width: 200px;
+  max-height: 170px;
+}
+
+.pos-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 11px;
+  padding: 1px 4px;
+}
+
+.legend-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-pct {
+  color: #94a3b8;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.pos-table-wrap {
+  overflow: auto;
+  min-height: 0;
+}
+
+table.positions {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 12px;
+}
+
+table.positions thead th {
+  position: sticky;
+  top: 0;
+  background: #0a0e17;
+  text-align: left;
+  padding: 7px 10px;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  border-bottom: 2px solid #1e2d45;
+}
+
+table.positions tbody td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #1a2236;
+  color: #c9cdd4;
+  white-space: nowrap;
+}
+
+table.positions tbody tr {
+  transition: background 0.15s ease;
+}
+
+table.positions tbody tr:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.ticker {
+  color: #3b82f6;
+  font-weight: 700;
+}
+
+.pnl.up   { color: #22c55e; }
+.pnl.down { color: #ef4444; }
+
+.alloc-cell {
+  min-width: 150px;
+}
+
+.alloc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alloc-bar {
+  flex: 1;
+  height: 7px;
+  background: #1a2236;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.alloc-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.alloc-pct {
+  font-weight: 600;
+  color: #e2e8f0;
+  min-width: 44px;
+  text-align: right;
+}
+
+/* ===================================================================
+   PANEL 6: SSE EVENT STREAM (row 6, col 1-4)
+   =================================================================== */
+.panel-sse {
+  grid-column: 1 / -1;
+  grid-row: 6;
+  max-height: 220px;
+}
+
+.sse-stream {
+  flex: 1;
+  overflow-y: auto;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  background: #0a0e17;
+  border: 1px solid #1e2d45;
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-height: 120px;
+  max-height: 160px;
+}
+
+.sse-line {
+  display: flex;
+  gap: 10px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(30, 45, 69, 0.4);
+}
+
+.sse-time {
+  color: #64748b;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.sse-event {
+  color: #06b6d4;
+  flex-shrink: 0;
+  min-width: 140px;
+  font-weight: 600;
+}
+
+.sse-data {
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sse-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #64748b;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.sse-stream::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sse-stream::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sse-stream::-webkit-scrollbar-thumb {
+  background: #1e2d45;
+  border-radius: 3px;
+}
+
+/* ===================================================================
+   LIVE PULSE DOT (header)
+   =================================================================== */
+.live-dot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  font-size: 10px;
+  color: #22c55e;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.live-dot::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: live-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes live-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+/* ===================================================================
+   RESPONSIVE
+   =================================================================== */
+@media (max-width: 1400px) {
+  .shell {
+    grid-template-columns: 1fr 1fr;
+  }
+  .panel-heartbeats { grid-column: 1 / 3; grid-row: 2; }
+  .panel-safety      { grid-column: 1 / 3; grid-row: 3; }
+  .panel-runs        { grid-column: 1 / 3; grid-row: 4; }
+  .panel-metrics     { grid-column: 1 / 3; grid-row: 5; }
+  .panel-posts       { grid-column: 1 / 3; grid-row: 6; }
+  .panel-positions   { grid-column: 1 / 3; grid-row: 7; }
+  .panel-sse         { grid-column: 1 / 3; grid-row: 8; }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .panel-heartbeats,
+  .panel-safety,
+  .panel-runs,
+  .panel-metrics,
+  .panel-posts,
+  .panel-positions,
+  .panel-sse { grid-column: 1 / -1; }
+
+  .heartbeat-grid { grid-template-columns: 1fr; }
+  .safety-grid { grid-template-columns: 1fr 1fr; }
+  .pos-summary { grid-template-columns: 1fr 1fr; }
+  .pos-body { grid-template-columns: 1fr; }
+  .posts-summary { grid-template-columns: 1fr 1fr; }
+}
+
+/* ===================================================================
+   SCROLLBAR GLOBAL
+   =================================================================== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #334155; }
 </style>
 </head>
 <body>
-<h1>Christian Bot Dashboard</h1>
-<div class="meta" id="last-refresh">never refreshed</div>
 
-<h2>Health</h2>
-<div class="grid">
-  <div class="card" id="health-dashboard">dashboard: …</div>
-  <div class="card" id="health-daemon">daemon: …</div>
-  <div class="card" id="health-bot">bot: …</div>
-  <div class="card" id="health-safety">safety: …</div>
-</div>
+<div class="shell">
 
-<h2>Safety / Kill Switch</h2>
-<div class="card">
-  <div id="safety-status">status: …</div>
-  <div style="margin-top:10px;">
-    <input type="password" id="kill-secret" class="secret" placeholder="kill-switch secret" />
-    <button class="danger" onclick="activateKillSwitch()">Activate Kill Switch</button>
-    <span id="kill-result" class="meta"></span>
+  <!-- ================================================================
+       HEADER
+       ================================================================ -->
+  <header class="header">
+    <div class="header-left">
+      <span class="header-logo">&boxbox; Christian Bot</span>
+      <span class="header-badge badge-paper">Paper Trading</span>
+      <span class="header-badge badge-uat">UAT Environment</span>
+      <span class="live-dot">Live</span>
+    </div>
+    <div>
+      <span class="header-clock" id="header-clock">2026-06-29 14:32:05 UTC</span>
+    </div>
+  </header>
+
+  <!-- ================================================================
+       PANEL 1: DAEMON HEARTBEATS
+       ================================================================ -->
+  <div class="panel panel-heartbeats">
+    <div class="panel-header">
+      <span class="panel-title">Daemon Heartbeats</span>
+      <span class="panel-badge" style="background:rgba(34,197,94,0.12);color:#22c55e;" id="hb-badge">ALL HEALTHY</span>
+    </div>
+    <div class="heartbeat-grid">
+      <div class="heartbeat-card">
+        <div class="hb-indicator green" id="hb-daemon-ind"></div>
+        <div class="hb-info">
+          <span class="hb-name">Poll Daemon</span>
+          <span class="hb-detail" id="hb-daemon">Loading…</span>
+        </div>
+      </div>
+      <div class="heartbeat-card">
+        <div class="hb-indicator green" id="hb-dash-ind"></div>
+        <div class="hb-info">
+          <span class="hb-name">Dashboard</span>
+          <span class="hb-detail" id="hb-dashboard">Loading…</span>
+        </div>
+      </div>
+      <div class="heartbeat-card">
+        <div class="hb-indicator green" id="hb-bot-ind"></div>
+        <div class="hb-info">
+          <span class="hb-name">Telegram Bot</span>
+          <span class="hb-detail" id="hb-bot">Loading…</span>
+        </div>
+      </div>
+      <div class="heartbeat-card">
+        <div class="hb-indicator green" id="hb-guard-ind"></div>
+        <div class="hb-info">
+          <span class="hb-name">Safety Guard</span>
+          <span class="hb-detail" id="hb-guard">Loading…</span>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-<h2>Recent Positions (latest tick)</h2>
-<div class="card"><table id="positions-table">
-  <thead><tr><th>Symbol</th><th>Qty</th><th>Market Value</th><th>Unrealized PnL</th><th>PnL %</th></tr></thead>
-  <tbody></tbody>
-</table></div>
-
-<h2>Per-Stage Latency Metrics</h2>
-<div class="card"><table id="metrics-table">
-  <thead><tr><th>Stage</th><th>p50 (ms)</th><th>p95 (ms)</th><th>max (ms)</th><th>count</th></tr></thead>
-  <tbody></tbody>
-</table></div>
-
-<h2>Recent Runs</h2>
-<div class="card"><table id="runs-table">
-  <thead><tr><th>Run ID</th><th>Started</th><th>Outcome</th><th>Signals</th><th>Orders</th></tr></thead>
-  <tbody></tbody>
-</table></div>
-
-<h2>Live Event Stream (SSE)</h2>
-<div class="card">
-  <div class="toolbar">
-    <span class="meta">tailing <code>/api/events/tail</code> — new audit events appear here</span>
-    <button id="sse-toggle" onclick="toggleSSE()">Pause</button>
+  <!-- ================================================================
+       PANEL 2: SAFETY STATUS
+       ================================================================ -->
+  <div class="panel panel-safety">
+    <div class="panel-header">
+      <span class="panel-title">Safety Status</span>
+      <span class="panel-badge" style="background:rgba(34,197,94,0.12);color:#22c55e;" id="safety-badge">CLEAR</span>
+    </div>
+    <div class="safety-grid">
+      <div class="safety-card">
+        <span class="safety-icon">&#128737;</span>
+        <span class="safety-label">RuntimeGuard</span>
+        <span class="safety-value ok" id="safety-guard">ACTIVE</span>
+      </div>
+      <div class="safety-card">
+        <span class="safety-icon">&#9878;</span>
+        <span class="safety-label">Reconcile</span>
+        <span class="safety-value ok" id="safety-reconcile">OK</span>
+      </div>
+      <div class="safety-card">
+        <span class="safety-icon">&#9940;</span>
+        <span class="safety-label">Kill Switch</span>
+        <span class="safety-value ok" id="kill-switch-state">DISARMED</span>
+      </div>
+      <div class="safety-card">
+        <span class="safety-icon">&#128274;</span>
+        <span class="safety-label">Fail-Closed</span>
+        <span class="safety-value info" id="safety-failclosed">ENGAGED</span>
+      </div>
+    </div>
   </div>
-  <div id="sse-log" style="margin-top:8px;"></div>
+
+  <!-- ================================================================
+       PANEL 3: RUN HISTORY
+       ================================================================ -->
+  <div class="panel panel-runs">
+    <div class="panel-header">
+      <span class="panel-title">Run History</span>
+      <span class="panel-badge" style="background:rgba(59,130,246,0.12);color:#3b82f6;" id="run-count">0 RUNS</span>
+    </div>
+    <div class="table-wrap">
+      <table class="runs">
+        <thead>
+          <tr>
+            <th>Run ID</th>
+            <th>Started</th>
+            <th>Duration</th>
+            <th>Signals</th>
+            <th>Orders</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody id="runs-tbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PANEL 4: METRICS
+       ================================================================ -->
+  <div class="panel panel-metrics">
+    <div class="panel-header">
+      <span class="panel-title">Pipeline Latency (p50 / p95)</span>
+      <span class="panel-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">ALL TIME</span>
+    </div>
+    <div class="chart-container" id="latency-chart-container">
+      <canvas id="latencyChart"></canvas>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:4px 12px;">
+      <span style="font-family:monospace;font-size:10px;color:#64748b;">Total observations: <span id="sig-total" style="color:#c9cdd4;">0</span></span>
+      <span style="font-family:monospace;font-size:10px;color:#64748b;">Active stages: <span id="stage-count" style="color:#c9cdd4;">0</span></span>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PANEL: CHRISTIAN'S POSTS — SUBSTACK FEED
+       ================================================================ -->
+  <div class="panel panel-posts">
+    <div class="panel-header">
+      <span class="panel-title">Christian&rsquo;s Posts &mdash; Substack Feed</span>
+      <span class="panel-badge" style="background:rgba(6,182,212,0.12);color:#06b6d4;" id="posts-count">0 POSTS</span>
+    </div>
+    <div class="posts-toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">&#8981;</span>
+        <input type="text" id="posts-search" class="search-input" placeholder="Search title, post ID, or signal&hellip;" autocomplete="off">
+      </div>
+      <div class="filter-group" id="posts-status-filter">
+        <button type="button" class="filter-btn active" data-status="all">All</button>
+        <button type="button" class="filter-btn" data-status="processed">Processed</button>
+        <button type="button" class="filter-btn" data-status="skipped">Skipped</button>
+        <button type="button" class="filter-btn" data-status="pending">Pending</button>
+      </div>
+      <label class="toggle-pill active" id="posts-group-toggle">
+        <input type="checkbox" id="posts-group-day" checked>
+        <span class="toggle-dot"></span>
+        <span>Group by day</span>
+      </label>
+      <span class="results-count" id="posts-results">Showing 0 of 0</span>
+    </div>
+    <div class="posts-summary">
+      <div class="post-stat">
+        <span class="post-stat-label">Posts Tracked</span>
+        <span class="post-stat-value" id="pst-total">0</span>
+      </div>
+      <div class="post-stat">
+        <span class="post-stat-label">Posts w/ Signals</span>
+        <span class="post-stat-value accent" id="pst-signals">0</span>
+      </div>
+      <div class="post-stat">
+        <span class="post-stat-label">Last Post</span>
+        <span class="post-stat-value" id="pst-last" style="font-size:13px;">—</span>
+      </div>
+      <div class="post-stat">
+        <span class="post-stat-label">Runs Linked</span>
+        <span class="post-stat-value" id="pst-runs">0</span>
+      </div>
+    </div>
+    <div class="posts-table-wrap">
+      <table class="posts">
+        <thead>
+          <tr>
+            <th>Published</th>
+            <th>Post ID</th>
+            <th>Title / Preview</th>
+            <th>Parsed Signal</th>
+            <th>Status</th>
+            <th>Run</th>
+          </tr>
+        </thead>
+        <tbody id="posts-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PANEL 5: POSITIONS & ALLOCATION
+       ================================================================ -->
+  <div class="panel panel-positions">
+    <div class="panel-header">
+      <span class="panel-title">Positions &amp; Allocation</span>
+      <span class="panel-badge" style="background:rgba(59,130,246,0.12);color:#3b82f6;" id="pos-count">0 HOLDINGS</span>
+    </div>
+    <div class="pos-summary">
+      <div class="pos-stat">
+        <span class="pos-stat-label">Total Equity</span>
+        <span class="pos-stat-value" id="ps-equity">$0</span>
+      </div>
+      <div class="pos-stat">
+        <span class="pos-stat-label">Invested</span>
+        <span class="pos-stat-value" id="ps-invested">$0</span>
+      </div>
+      <div class="pos-stat">
+        <span class="pos-stat-label">Holdings</span>
+        <span class="pos-stat-value" id="ps-holdings">0</span>
+      </div>
+      <div class="pos-stat">
+        <span class="pos-stat-label">Unrealized P&amp;L</span>
+        <span class="pos-stat-value" id="ps-pnl">$0</span>
+      </div>
+    </div>
+    <div class="pos-body">
+      <div class="pos-donut-wrap">
+        <canvas id="allocChart"></canvas>
+        <div class="pos-legend" id="alloc-legend"></div>
+      </div>
+      <div class="pos-table-wrap">
+        <table class="positions">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Qty</th>
+              <th>Mkt Value</th>
+              <th>P&amp;L</th>
+              <th>P&amp;L %</th>
+              <th class="alloc-cell">Allocation</th>
+            </tr>
+          </thead>
+          <tbody id="pos-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PANEL 6: SSE EVENT STREAM
+       ================================================================ -->
+  <div class="panel panel-sse">
+    <div class="panel-header">
+      <span class="panel-title">Event Stream (SSE)</span>
+      <span class="panel-badge" style="background:rgba(6,182,212,0.12);color:#06b6d4;animation:live-blink 1.2s ease-in-out infinite;">LIVE</span>
+    </div>
+    <div class="sse-stream" id="sse-stream">
+      <div class="sse-empty">Connecting to event stream…</div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-const REFRESH_MS = 30000;
-let sseSource = null;
-let ssePaused = false;
+// =========================================================================
+// CONSTANTS & HELPERS
+// =========================================================================
+var REFRESH_MS = 30000;
+var MAX_SSE_LINES = 50;
 
-function fmt(v, d=2) { return (v === null || v === undefined) ? '—' : Number(v).toFixed(d); }
+// Stage name mapping: API key → display label
+var STAGE_MAP = {
+  detect: "detection",
+  parse: "parse",
+  ta: "ta",
+  sizing: "sizing",
+  exec: "exec_gate",
+  broker: "broker",
+};
 
-function pill(status) {
-  const s = String(status || 'unknown').toLowerCase();
-  return `<span class="pill ${s}">${s}</span>`;
+var POS_COLORS = ["#3b82f6", "#8b5cf6", "#22c55e", "#f59e0b", "#06b6d4", "#ec4899", "#94a3b8"];
+
+var DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function pad(n) { return String(n).padStart(2, "0"); }
+function ts() {
+  var d = new Date();
+  return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+}
+function isoToLocal(iso) {
+  if (!iso) return "";
+  return iso.replace("T", " ").replace(/\.\d+Z/, "").replace(/\.\d+$/, "");
+}
+function fmtMoney(n, decimals) {
+  decimals = decimals || 0;
+  if (n == null) return "—";
+  var sign = n < 0 ? "-" : "";
+  var abs = Math.abs(n);
+  return sign + "$" + abs.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function fmtPct(n) {
+  if (n == null || n === 0) return "0.00%";
+  return (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
+}
+function fmtMs(ms) {
+  if (ms == null) return "—";
+  if (ms < 10000) return (ms / 1000).toFixed(1) + "s";
+  return (ms / 1000).toFixed(0) + "s";
 }
 
-function setLastRefresh() {
-  document.getElementById('last-refresh').textContent = 'last refresh: ' + new Date().toLocaleTimeString();
+// =========================================================================
+// GLOBAL DATA STORES (populated by refreshAll)
+// =========================================================================
+var runData = [];
+var metricsData = null;
+var safetyData = null;
+var healthData = null;
+var postsData = [];
+var positionsData = [];
+
+// =========================================================================
+// CLOCK
+// =========================================================================
+function updateClock() {
+  var now = new Date();
+  document.getElementById("header-clock").textContent =
+    now.toISOString().replace("T", " ").replace(/\.\d+Z/, "") + " UTC";
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// =========================================================================
+// DATA FETCHING
+// =========================================================================
+function fetchJSON(url) {
+  return fetch(url).then(function(r) {
+    if (!r.ok) throw new Error(url + " → " + r.status);
+    return r.json();
+  });
 }
 
-async function fetchJSON(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${url} → ${r.status}`);
-  return r.json();
+function elapsedMs(startIso, endIso) {
+  if (!startIso) return null;
+  var s = new Date(startIso).getTime();
+  var e = endIso ? new Date(endIso).getTime() : Date.now();
+  if (isNaN(s) || isNaN(e)) return null;
+  return Math.max(0, e - s);
 }
 
-function renderHealth(h) {
-  document.getElementById('health-dashboard').innerHTML = `dashboard: ${pill(h.dashboard)}`;
-  const d = h.daemon || {};
-  document.getElementById('health-daemon').innerHTML =
-    `daemon: ${pill(d.status)}<br><span class="meta">last_tick: ${d.last_tick || '—'}` +
-    (d.stale_seconds !== undefined ? ` · stale ${d.stale_seconds}s` : '') + '</span>';
-  const b = h.bot || {};
-  document.getElementById('health-bot').innerHTML =
-    `bot: ${pill(b.status)}<br><span class="meta">last_heartbeat: ${b.last_heartbeat || '—'}` +
-    (b.stale_seconds !== undefined ? ` · stale ${b.stale_seconds}s` : '') + '</span>';
-  const s = h.safety || {};
-  document.getElementById('health-safety').innerHTML = `safety: ${pill(s.status)}`;
+function refreshAll() {
+  return Promise.allSettled([
+    fetchJSON("/api/runs?limit=20"),
+    fetchJSON("/api/metrics"),
+    fetchJSON("/api/safety"),
+    fetchJSON("/api/health"),
+    fetchJSON("/api/posts?limit=50"),
+    fetchJSON("/api/positions"),
+  ]).then(function(results) {
+    if (results[0].status === "fulfilled") runData = results[0].value;
+    if (results[1].status === "fulfilled") metricsData = results[1].value;
+    if (results[2].status === "fulfilled") safetyData = results[2].value;
+    if (results[3].status === "fulfilled") healthData = results[3].value;
+    if (results[4].status === "fulfilled") postsData = results[4].value;
+    if (results[5].status === "fulfilled") positionsData = results[5].value;
+    renderAll();
+  });
 }
 
-function renderSafety(s) {
-  document.getElementById('safety-status').innerHTML =
-    `kill_switch_active: <code>${s.kill_switch_active}</code> · guard_status: ${pill(s.guard_status)}`;
+// =========================================================================
+// RENDER: ALL PANELS
+// =========================================================================
+function renderAll() {
+  renderHealth();
+  renderSafety();
+  renderRuns();
+  renderMetrics();
+  renderPosts();
+  renderPositions();
 }
 
-function renderPositions(rows) {
-  const tbody = document.querySelector('#positions-table tbody');
-  if (!rows || rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="meta">no positions</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows.map(p =>
-    `<tr><td>${p.symbol}</td><td>${fmt(p.position_qty, 4)}</td>` +
-    `<td>${fmt(p.market_value, 2)}</td><td>${fmt(p.unrealized_pnl, 2)}</td>` +
-    `<td>${fmt(p.pnl_pct, 2)}</td></tr>`
-  ).join('');
-}
+// =========================================================================
+// RENDER: HEALTH
+// =========================================================================
+function renderHealth() {
+  var h = healthData || {};
 
-function renderMetrics(m) {
-  const stages = m.stages || {};
-  const tbody = document.querySelector('#metrics-table tbody');
-  tbody.innerHTML = Object.keys(stages).map(name => {
-    const s = stages[name];
-    return `<tr><td>${name}</td><td>${fmt(s.p50, 0)}</td><td>${fmt(s.p95, 0)}</td>` +
-           `<td>${fmt(s.max, 0)}</td><td>${s.count}</td></tr>`;
-  }).join('');
-}
+  // Daemon
+  var daemon = h.daemon || {};
+  var dStatus = daemon.status || "unknown";
+  var dTick = daemon.last_tick ? isoToLocal(daemon.last_tick) : "—";
+  var dStale = daemon.stale_seconds != null ? " · stale " + Math.round(daemon.stale_seconds) + "s" : "";
+  document.getElementById("hb-daemon").textContent = "last tick: " + dTick + dStale;
+  setHbIndicator("hb-daemon-ind", dStatus);
 
-function renderRuns(runs) {
-  const tbody = document.querySelector('#runs-table tbody');
-  if (!runs || runs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="meta">no runs yet</td></tr>';
-    return;
-  }
-  tbody.innerHTML = runs.map(r =>
-    `<tr><td><a href="#" onclick="return false;" style="color:#58a6ff;">${r.run_id}</a></td>` +
-    `<td>${r.started_at || '—'}</td><td>${r.outcome || '—'}</td>` +
-    `<td>${r.signals_processed}</td><td>${r.orders_placed}</td></tr>`
-  ).join('');
-}
+  // Dashboard (always ok)
+  document.getElementById("hb-dashboard").textContent = "running · " + (h.dashboard || "ok");
+  setHbIndicator("hb-dash-ind", "ok");
 
-async function refreshAll() {
-  try {
-    const [health, safety, positions, metrics, runs] = await Promise.all([
-      fetchJSON('/api/health'),
-      fetchJSON('/api/safety'),
-      fetchJSON('/api/positions'),
-      fetchJSON('/api/metrics'),
-      fetchJSON('/api/runs?limit=20'),
-    ]);
-    renderHealth(health);
-    renderSafety(safety);
-    renderPositions(positions);
-    renderMetrics(metrics);
-    renderRuns(runs);
-    setLastRefresh();
-  } catch (e) {
-    document.getElementById('last-refresh').textContent = 'refresh error: ' + e.message;
-  }
-}
+  // Bot
+  var bot = h.bot || {};
+  var bStatus = bot.status || "unknown";
+  var bHb = bot.last_heartbeat ? isoToLocal(bot.last_heartbeat) : "—";
+  var bStale = bot.stale_seconds != null ? " · stale " + Math.round(bot.stale_seconds) + "s" : "";
+  document.getElementById("hb-bot").textContent = "heartbeat: " + bHb + bStale;
+  setHbIndicator("hb-bot-ind", bStatus);
 
-async function activateKillSwitch() {
-  const secret = document.getElementById('kill-secret').value;
-  const result = document.getElementById('kill-result');
-  if (!secret) { result.textContent = 'enter secret first'; return; }
-  try {
-    const r = await fetch('/api/kill-switch', {
-      method: 'POST',
-      headers: { 'X-Kill-Switch-Secret': secret },
-    });
-    if (r.ok) {
-      result.textContent = '✓ kill switch activated';
-      refreshAll();
-    } else if (r.status === 403) {
-      result.textContent = '✗ 403 forbidden (bad secret)';
-    } else {
-      result.textContent = `✗ ${r.status}`;
-    }
-  } catch (e) {
-    result.textContent = '✗ ' + e.message;
-  }
-}
+  // Safety (guard)
+  var safetyH = h.safety || {};
+  var sStatus = safetyH.status || "unknown";
+  document.getElementById("hb-guard").textContent = "mode=uat_confirm · status=" + sStatus;
+  setHbIndicator("hb-guard-ind", sStatus);
 
-function toggleSSE() {
-  ssePaused = !ssePaused;
-  document.getElementById('sse-toggle').textContent = ssePaused ? 'Resume' : 'Pause';
-  if (ssePaused) {
-    if (sseSource) { sseSource.close(); sseSource = null; }
+  // Badge
+  var badge = document.getElementById("hb-badge");
+  if (dStatus === "ok" && bStatus === "ok") {
+    badge.textContent = "ALL HEALTHY";
+    badge.style.background = "rgba(34,197,94,0.12)";
+    badge.style.color = "#22c55e";
+  } else if (dStatus === "stale" || bStatus === "stale") {
+    badge.textContent = "DEGRADED";
+    badge.style.background = "rgba(245,158,11,0.12)";
+    badge.style.color = "#f59e0b";
   } else {
-    startSSE();
+    badge.textContent = "UNKNOWN";
+    badge.style.background = "rgba(100,116,139,0.15)";
+    badge.style.color = "#94a3b8";
   }
 }
+
+function setHbIndicator(elId, status) {
+  var el = document.getElementById(elId);
+  el.className = "hb-indicator";
+  if (status === "ok") el.classList.add("green");
+  else if (status === "stale") el.classList.add("amber");
+  else el.classList.add("red");
+}
+
+// =========================================================================
+// RENDER: SAFETY
+// =========================================================================
+function renderSafety() {
+  var s = safetyData || {};
+  var killActive = s.kill_switch_active === true;
+  var guardOk = s.guard_status === "ok";
+
+  // Kill switch
+  var ksEl = document.getElementById("kill-switch-state");
+  if (killActive) {
+    ksEl.textContent = "ARMED";
+    ksEl.className = "safety-value fail";
+  } else {
+    ksEl.textContent = "DISARMED";
+    ksEl.className = "safety-value ok";
+  }
+
+  // RuntimeGuard
+  var rgEl = document.getElementById("safety-guard");
+  rgEl.textContent = guardOk ? "ACTIVE" : "STOPPED";
+  rgEl.className = "safety-value " + (guardOk ? "ok" : "fail");
+
+  // Reconcile (derived: ok if guard is ok and kill not active)
+  var recEl = document.getElementById("safety-reconcile");
+  var reconcileOk = guardOk && !killActive;
+  recEl.textContent = reconcileOk ? "OK" : "FAIL";
+  recEl.className = "safety-value " + (reconcileOk ? "ok" : "fail");
+
+  // Fail-closed
+  var fcEl = document.getElementById("safety-failclosed");
+  fcEl.textContent = killActive ? "TRIGGERED" : "ENGAGED";
+  fcEl.className = "safety-value " + (killActive ? "fail" : "info");
+
+  // Badge
+  var badge = document.getElementById("safety-badge");
+  if (killActive) {
+    badge.textContent = "KILLED";
+    badge.style.background = "rgba(239,68,68,0.12)";
+    badge.style.color = "#ef4444";
+  } else {
+    badge.textContent = "CLEAR";
+    badge.style.background = "rgba(34,197,94,0.12)";
+    badge.style.color = "#22c55e";
+  }
+}
+
+// =========================================================================
+// RENDER: RUN HISTORY
+// =========================================================================
+function renderRuns() {
+  var tbody = document.getElementById("runs-tbody");
+  var runs = runData || [];
+
+  document.getElementById("run-count").textContent = runs.length + " RUNS";
+
+  if (runs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="td-empty">No runs yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = runs.map(function(r) {
+    var dur = elapsedMs(r.started_at, r.ended_at);
+    var durStr = fmtMs(dur);
+    var signals = r.signals_processed != null ? r.signals_processed : "—";
+    var orders = r.orders_placed != null ? r.orders_placed : "—";
+    var outcome = r.outcome || "unknown";
+    return '<tr>' +
+      '<td style="color:#3b82f6;">' + (r.run_id || "—") + '</td>' +
+      '<td>' + isoToLocal(r.started_at) + '</td>' +
+      '<td>' + durStr + '</td>' +
+      '<td>' + signals + '</td>' +
+      '<td>' + orders + '</td>' +
+      '<td><span class="outcome-badge ' + outcome + '">' + outcome + '</span></td>' +
+      '</tr>';
+  }).join("");
+}
+
+// =========================================================================
+// RENDER: METRICS CHART
+// =========================================================================
+var latencyChart = null;
+
+function renderMetrics() {
+  var m = metricsData;
+  var stages = (m && m.stages) ? m.stages : {};
+  var visibleStages = [];
+  var labels = [];
+  var p50vals = [];
+  var p95vals = [];
+
+  // Map API stages to display labels, only include stages with data
+  Object.keys(STAGE_MAP).forEach(function(apiKey) {
+    var s = stages[apiKey];
+    if (s && s.count > 0) {
+      visibleStages.push(apiKey);
+      labels.push(STAGE_MAP[apiKey]);
+      p50vals.push(s.p50 != null ? s.p50 : 0);
+      p95vals.push(s.p95 != null ? s.p95 : 0);
+    }
+  });
+
+  // Update counters
+  var totalCount = visibleStages.reduce(function(sum, k) { return sum + (stages[k] ? stages[k].count : 0); }, 0);
+  document.getElementById("sig-total").textContent = totalCount;
+  document.getElementById("stage-count").textContent = visibleStages.length;
+
+  if (visibleStages.length === 0) {
+    // No data — destroy chart, show placeholder
+    if (latencyChart) { latencyChart.destroy(); latencyChart = null; }
+    document.getElementById("latency-chart-container").innerHTML =
+      '<canvas id="latencyChart"></canvas><div class="chart-no-data">No latency data yet — run a poll cycle</div>';
+    return;
+  }
+
+  var ctx = document.getElementById("latencyChart");
+  if (!ctx) {
+    // Canvas got replaced by the no-data path
+    document.getElementById("latency-chart-container").innerHTML = '<canvas id="latencyChart"></canvas>';
+    ctx = document.getElementById("latencyChart");
+  }
+  ctx = ctx.getContext("2d");
+
+  var gradientP50 = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientP50.addColorStop(0, "rgba(59,130,246,0.7)");
+  gradientP50.addColorStop(1, "rgba(59,130,246,0.15)");
+
+  var gradientP95 = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientP95.addColorStop(0, "rgba(139,92,246,0.7)");
+  gradientP95.addColorStop(1, "rgba(139,92,246,0.15)");
+
+  if (latencyChart) {
+    latencyChart.data.labels = labels;
+    latencyChart.data.datasets[0].data = p50vals;
+    latencyChart.data.datasets[1].data = p95vals;
+    latencyChart.update("none");
+  } else {
+    latencyChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "p50",
+            data: p50vals,
+            backgroundColor: gradientP50,
+            borderColor: "#3b82f6",
+            borderWidth: 1,
+            borderRadius: 3,
+            borderSkipped: false,
+          },
+          {
+            label: "p95",
+            data: p95vals,
+            backgroundColor: gradientP95,
+            borderColor: "#8b5cf6",
+            borderWidth: 1,
+            borderRadius: 3,
+            borderSkipped: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: "y",
+        plugins: {
+          legend: {
+            position: "top",
+            align: "end",
+            labels: {
+              color: "#94a3b8",
+              font: { family: "'Inter','Segoe UI',sans-serif", size: 10, weight: "600" },
+              boxWidth: 12,
+              boxHeight: 12,
+              padding: 12,
+              usePointStyle: true,
+            }
+          },
+          tooltip: {
+            backgroundColor: "#111827",
+            titleColor: "#e2e8f0",
+            bodyColor: "#c9cdd4",
+            borderColor: "#1e2d45",
+            borderWidth: 1,
+            titleFont: { family: "'JetBrains Mono','Consolas',monospace", size: 11 },
+            bodyFont: { family: "'JetBrains Mono','Consolas',monospace", size: 11 },
+            callbacks: {
+              label: function(ctx) { return ctx.dataset.label + ": " + ctx.raw + " ms"; }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: "logarithmic",
+            title: {
+              display: true,
+              text: "latency (ms, log scale)",
+              color: "#64748b",
+              font: { family: "'Inter','Segoe UI',sans-serif", size: 9, weight: "600" }
+            },
+            grid: { color: "rgba(30,45,69,0.5)" },
+            ticks: {
+              color: "#64748b",
+              font: { family: "'JetBrains Mono','Consolas',monospace", size: 9 },
+              callback: function(v) { return v + "ms"; }
+            }
+          },
+          y: {
+            grid: { display: false },
+            ticks: {
+              color: "#94a3b8",
+              font: { family: "'JetBrains Mono','Consolas',monospace", size: 10, weight: "500" }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+// =========================================================================
+// RENDER: POSTS FEED
+// =========================================================================
+var postsFilter = { search: "", status: "all", groupByDay: true };
+var collapsedGroups = {};
+
+function dateKey(p) {
+  var ts = p.timestamp || p.published_at || "";
+  return ts.slice(0, 10);
+}
+
+function prettyDate(key) {
+  var d = new Date(key + "T00:00:00");
+  return { date: MONTHS[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear(), dow: DOW[d.getDay()] };
+}
+
+// Derive status from API data: has run_id → processed, else if parsed → pending, else skipped
+function deriveStatus(p) {
+  if (p.status) return p.status.toLowerCase();
+  if (p.run_id) return "processed";
+  if (p.parsed) return "pending";
+  return "skipped";
+}
+
+// Derive signal count from API data
+function deriveSignals(p) {
+  if (p.signals != null) return p.signals;
+  if (p.signal_count != null) return p.signal_count;
+  // If parsed is truthy and is a number or looks like signal data, count
+  if (p.parsed && typeof p.parsed === "number") return p.parsed;
+  if (p.parsed && typeof p.parsed === "string" && p.parsed !== "—" && p.parsed !== "") return 1;
+  if (p.parsed && typeof p.parsed === "boolean") return 0;
+  if (p.parsed) return 1;
+  return 0;
+}
+
+function getFilteredPosts() {
+  var q = postsFilter.search.trim().toLowerCase();
+  return (postsData || []).filter(function(p) {
+    if (postsFilter.status !== "all" && deriveStatus(p) !== postsFilter.status) return false;
+    var q = postsFilter.search.trim().toLowerCase();
+    var hay = ((p.title || "") + " " + (p.post_id || "") + " " + (p.parsed || "")).toLowerCase();
+    if (q && !hay.includes(q)) return false;
+    return true;
+  });
+}
+
+function postRowHtml(p) {
+  var sigCount = deriveSignals(p);
+  var sigHtml = sigCount > 0
+    ? '<span class="signal-pill">' + sigCount + '</span>'
+    : '<span style="color:#64748b;">—</span>';
+  var statusVal = deriveStatus(p);
+  var runHtml = p.run_id
+    ? '<span class="run-link linked">' + p.run_id.slice(-12) + '</span>'
+    : '<span class="run-link">—</span>';
+  var pubTs = p.timestamp || p.published_at || "—";
+  var pubDisplay = isoToLocal(pubTs);
+  var parsedDisplay = p.parsed;
+  if (typeof parsedDisplay === "boolean") parsedDisplay = parsedDisplay ? "✓" : "—";
+  if (parsedDisplay == null) parsedDisplay = "—";
+  return '<tr>' +
+    '<td>' + pubDisplay + '</td>' +
+    '<td class="post-id">' + (p.post_id || "—") + '</td>' +
+    '<td class="post-title" title="' + (p.title || "").replace(/"/g, "&quot;") + '">' + (p.title || "—") + '</td>' +
+    '<td>' + parsedDisplay + '</td>' +
+    '<td>' + sigHtml + '</td>' +
+    '<td><span class="post-status ' + statusVal + '">' + statusVal + '</span></td>' +
+    '<td>' + runHtml + '</td>' +
+    '</tr>';
+}
+
+function groupHeaderHtml(key, posts) {
+  var pd = prettyDate(key);
+  var sigCount = posts.reduce(function(s, p) { return s + deriveSignals(p); }, 0);
+  var collapsed = collapsedGroups[key];
+  return '<tr class="post-group-header" data-date="' + key + '">' +
+    '<td colspan="7">' +
+      '<div class="group-row-inner">' +
+        '<span class="group-folder">' + (collapsed ? "&#128193;" : "&#128194;") + '</span>' +
+        '<span class="group-arrow ' + (collapsed ? "" : "open") + '">&#9654;</span>' +
+        '<span class="group-date">' + pd.date + '</span>' +
+        '<span class="group-dow">' + pd.dow + '</span>' +
+        '<span class="group-count">' +
+          '<span class="gc-strong">' + posts.length + '</span> post' + (posts.length !== 1 ? "s" : "") +
+          ' &middot; <span class="gc-strong">' + sigCount + '</span> signal' + (sigCount !== 1 ? "s" : "") +
+        '</span>' +
+      '</div>' +
+    '</td>' +
+    '</tr>';
+}
+
+function renderPosts() {
+  var tbody = document.getElementById("posts-tbody");
+  var filtered = getFilteredPosts();
+  var total = (postsData || []).length;
+
+  document.getElementById("posts-count").textContent = total + " POSTS";
+  document.getElementById("posts-results").textContent = "Showing " + filtered.length + " of " + total;
+
+  // Summary stats (from full dataset)
+  var withSignals = (postsData || []).filter(function(p) { return deriveSignals(p) > 0; }).length;
+  var withRuns = (postsData || []).filter(function(p) { return !!p.run_id; }).length;
+  var lastTs = total > 0 ? isoToLocal(postsData[0].timestamp || postsData[0].published_at || "") : "—";
+  document.getElementById("pst-total").textContent = total;
+  document.getElementById("pst-signals").textContent = withSignals;
+  document.getElementById("pst-runs").textContent = withRuns;
+  document.getElementById("pst-last").textContent = lastTs;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="posts-empty">No posts match your filters</td></tr>';
+    return;
+  }
+
+  var groups = {};
+  var html = "";
+  if (postsFilter.groupByDay) {
+    Object.keys(groups).sort().reverse().forEach(function(key) {
+      html += groupHeaderHtml(key, groups[key]);
+      if (!collapsedGroups[key]) {
+        html += groups[key].map(postRowHtml).join("");
+      }
+    });
+    tbody.innerHTML = html;
+    tbody.querySelectorAll(".post-group-header").forEach(function(row) {
+      row.addEventListener("click", function() {
+        var key = row.dataset.date;
+        if (collapsedGroups[key]) delete collapsedGroups[key];
+        else collapsedGroups[key] = true;
+        renderPosts();
+      });
+    });
+  } else {
+    tbody.innerHTML = filtered.map(postRowHtml).join("");
+  }
+}
+
+// --- Filter event bindings ---
+document.getElementById("posts-search").addEventListener("input", function(e) {
+  postsFilter.search = e.target.value;
+  renderPosts();
+});
+
+document.querySelectorAll("#posts-status-filter .filter-btn").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    document.querySelectorAll("#posts-status-filter .filter-btn").forEach(function(b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    postsFilter.status = btn.dataset.status;
+    renderPosts();
+  });
+});
+
+var groupToggle = document.getElementById("posts-group-toggle");
+document.getElementById("posts-group-day").addEventListener("change", function(e) {
+  postsFilter.groupByDay = e.target.checked;
+  groupToggle.classList.toggle("active", e.target.checked);
+  renderPosts();
+});
+
+// =========================================================================
+// RENDER: POSITIONS & ALLOCATION
+// =========================================================================
+var allocChart = null;
+
+function renderPositions() {
+  var positions = positionsData || [];
+  var tbody = document.getElementById("pos-tbody");
+
+  document.getElementById("pos-count").textContent = positions.length + " HOLDINGS";
+
+  if (positions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="td-empty">No positions</td></tr>';
+    document.getElementById("ps-equity").textContent = "—";
+    document.getElementById("ps-invested").textContent = "—";
+    document.getElementById("ps-holdings").textContent = "0";
+    document.getElementById("ps-pnl").textContent = "—";
+    document.getElementById("ps-pnl").className = "pos-stat-value";
+    if (allocChart) { allocChart.destroy(); allocChart = null; }
+    document.getElementById("alloc-legend").innerHTML = "";
+    return;
+  }
+
+  // Sort by market value desc
+  var sorted = positions.slice().sort(function(a, b) {
+    return (b.market_value || 0) - (a.market_value || 0);
+  });
+
+  var totalInvested = sorted.reduce(function(s, p) { return s + (p.market_value || 0); }, 0);
+  var totalPnl = sorted.reduce(function(s, p) { return s + (p.unrealized_pnl || 0); }, 0);
+  var maxPct = totalInvested > 0
+    ? Math.max.apply(null, sorted.map(function(p) { return ((p.market_value || 0) / totalInvested) * 100; }))
+    : 0;
+
+  // Summary
+  document.getElementById("ps-equity").textContent = fmtMoney(totalInvested);
+  document.getElementById("ps-invested").textContent = fmtMoney(totalInvested);
+  document.getElementById("ps-holdings").textContent = positions.length;
+  var pnlEl = document.getElementById("ps-pnl");
+  pnlEl.textContent = fmtMoney(totalPnl) + "  (" + fmtPct(totalInvested > 0 ? (totalPnl / (totalInvested - totalPnl)) * 100 : 0) + ")";
+  pnlEl.className = "pos-stat-value " + (totalPnl >= 0 ? "up" : "down");
+
+  // Table
+  tbody.innerHTML = sorted.map(function(p, i) {
+    var mktVal = p.market_value || 0;
+    var pnlVal = p.unrealized_pnl || 0;
+    var pnlPct = p.pnl_pct != null ? p.pnl_pct : 0;
+    var pct = totalInvested > 0 ? (mktVal / totalInvested) * 100 : 0;
+    var barWidth = maxPct > 0 ? (pct / maxPct) * 100 : 0;
+    var color = POS_COLORS[i % POS_COLORS.length];
+    var pnlClass = pnlVal >= 0 ? "up" : "down";
+    var qty = p.position_qty != null ? p.position_qty : "—";
+    return '<tr>' +
+      '<td class="ticker">' + (p.symbol || "—") + '</td>' +
+      '<td>' + qty + '</td>' +
+      '<td>' + fmtMoney(mktVal) + '</td>' +
+      '<td class="pnl ' + pnlClass + '">' + fmtMoney(pnlVal) + ' <span style="font-size:10px;opacity:.8;">' + fmtPct(pnlPct) + '</span></td>' +
+      '<td class="pnl ' + pnlClass + '">' + fmtPct(pnlPct) + '</td>' +
+      '<td class="alloc-cell">' +
+        '<div class="alloc-row">' +
+          '<div class="alloc-bar"><div class="alloc-fill" style="width:' + barWidth + '%;background:' + color + ';"></div></div>' +
+          '<span class="alloc-pct">' + pct.toFixed(1) + '%</span>' +
+        '</div>' +
+      '</td>' +
+      '</tr>';
+  }).join("");
+
+  // Donut chart
+  var donutData = sorted.map(function(p) { return +(p.market_value || 0).toFixed(2); });
+  var donutLabels = sorted.map(function(p) { return p.symbol; });
+  var donutColors = sorted.map(function(_, i) { return POS_COLORS[i % POS_COLORS.length]; });
+
+  if (allocChart) {
+    allocChart.data.labels = donutLabels;
+    allocChart.data.datasets[0].data = donutData;
+    allocChart.data.datasets[0].backgroundColor = donutColors;
+    allocChart.update("none");
+  } else {
+    allocChart = new Chart(document.getElementById("allocChart").getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels: donutLabels,
+        datasets: [{
+          data: donutData,
+          backgroundColor: donutColors,
+          borderColor: "#0a0e17",
+          borderWidth: 2,
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "64%",
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#111827",
+            titleColor: "#e2e8f0",
+            bodyColor: "#c9cdd4",
+            borderColor: "#1e2d45",
+            borderWidth: 1,
+            callbacks: {
+              label: function(ctx) {
+                var v = ctx.raw;
+                var liveInvested = ctx.dataset.data.reduce(function(s, x) { return s + x; }, 0);
+                var pct = liveInvested > 0 ? (v / liveInvested) * 100 : 0;
+                return ctx.label + ": " + fmtMoney(v) + " (" + pct.toFixed(1) + "%)";
+              }
+            }
+          }
+        }
+      },
+      plugins: [{
+        id: "centerText",
+        afterDraw: function(chart) {
+          var ctx = chart.ctx;
+          var chartArea = chart.chartArea;
+          if (!chartArea) return;
+          var liveInvested = chart.data.datasets[0].data.reduce(function(s, v) { return s + v; }, 0);
+          var cx = (chartArea.left + chartArea.right) / 2;
+          var cy = (chartArea.top + chartArea.bottom) / 2;
+          ctx.save();
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#64748b";
+          ctx.font = "600 9px 'Inter','Segoe UI',sans-serif";
+          ctx.fillText("INVESTED", cx, cy - 8);
+          ctx.fillStyle = "#e2e8f0";
+          ctx.font = "700 14px 'JetBrains Mono','Consolas',monospace";
+          ctx.fillText(fmtMoney(liveInvested), cx, cy + 10);
+          ctx.restore();
+        }
+      }]
+    });
+  }
+
+  // Legend
+  document.getElementById("alloc-legend").innerHTML = sorted.map(function(p, i) {
+    var pct = totalInvested > 0 ? ((p.market_value || 0) / totalInvested) * 100 : 0;
+    var color = POS_COLORS[i % POS_COLORS.length];
+    return '<div class="legend-item">' +
+      '<span class="legend-left">' +
+        '<span class="legend-dot" style="background:' + color + ';"></span>' +
+        '<span style="color:#e2e8f0;font-weight:600;">' + p.symbol + '</span>' +
+      '</span>' +
+      '<span class="legend-pct">' + pct.toFixed(1) + '%</span>' +
+    '</div>';
+  }).join("");
+}
+
+// =========================================================================
+// SSE EVENT STREAM (real)
+// =========================================================================
+var sseSource = null;
+var sseEl = document.getElementById("sse-stream");
+var sseHadEvents = false;
 
 function startSSE() {
   if (sseSource) sseSource.close();
-  const log = document.getElementById('sse-log');
-  const es = new EventSource('/api/events/tail');
-  es.onmessage = function(ev) {
-    const div = document.createElement('div');
-    const time = new Date().toLocaleTimeString();
-    try {
-      const j = JSON.parse(ev.data);
-      div.textContent = `${time} · ${j.event_type || 'event'} · ${j.correlation_id || ''}`;
-    } catch {
-      div.textContent = `${time} · ${ev.data}`;
+  sseSource = new EventSource("/api/events/tail");
+
+  sseSource.onopen = function() {
+    if (!sseHadEvents) {
+      sseEl.innerHTML = '<div class="sse-empty">Connected — waiting for events…</div>';
     }
-    log.insertBefore(div, log.firstChild);
-    while (log.children.length > 100) log.removeChild(log.lastChild);
   };
-  es.onerror = function() { /* browser auto-reconnects */ };
-  sseSource = es;
+
+  sseSource.onmessage = function(ev) {
+    if (!sseHadEvents) {
+      sseEl.innerHTML = "";
+      sseHadEvents = true;
+    }
+
+    var time = ts();
+    var eventType = "event";
+    var dataText = ev.data || "";
+    var j = null;
+    var parts = [];
+
+    try {
+      j = JSON.parse(ev.data);
+      if (j.event_type) parts.push(j.event_type);
+      if (j.data && typeof j.data === "string") parts.push(j.data);
+      else if (j.data && typeof j.data === "object") parts.push(JSON.stringify(j.data));
+      if (j.source) parts.push("src=" + j.source);
+      if (j.correlation_id) parts.push("cid=" + j.correlation_id);
+      dataText = parts.join(" · ") || ev.data;
+      // Use api timestamp if available
+      if (j.timestamp) time = isoToLocal(j.timestamp).slice(11, 19);
+    } catch (e) {
+      // Non-JSON event data — use raw string
+    }
+
+    var line = document.createElement("div");
+    line.className = "sse-line";
+    line.innerHTML = '<span class="sse-time">' + time + '</span><span class="sse-event">' + eventType + '</span><span class="sse-data">' + dataText + '</span>';
+
+    sseEl.appendChild(line);
+
+    while (sseEl.children.length > MAX_SSE_LINES) {
+      sseEl.removeChild(sseEl.firstChild);
+    }
+
+    sseEl.scrollTop = sseEl.scrollHeight;
+  };
+
+  sseSource.onerror = function() {
+    // Browser auto-reconnects; mark stale after reconnect fails
+    if (!sseHadEvents) {
+      sseEl.innerHTML = '<div class="sse-empty">Connection error — retrying…</div>';
+    }
+  };
 }
 
+// =========================================================================
+// INIT
+// =========================================================================
 refreshAll();
 setInterval(refreshAll, REFRESH_MS);
 startSSE();
 </script>
+
 </body>
 </html>
